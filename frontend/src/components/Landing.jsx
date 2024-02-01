@@ -70,21 +70,21 @@ function Landing() {
         }
     }
 
-    return <div className="flex flex-col min-h-screen bg-white dark:bg-[#2B60C2] ">
+    return <div className="flex flex-col min-h-screen bg-white">
        
-        <header className="flex items-center justify-between px-6 py-4 bg-[#2B60C2] dark:bg-gray-800">
+        <header className="flex items-center justify-between px-6 py-4 bg-[#2B60C2] ">
             <a className="flex mr-2 items-center gap-2 font-semibold" href="#">
                 <img src="logo.png" alt="" className="w-12 rounded-sm"/>
                 <span className="text-white">Munji</span>
             </a>
             <nav className="hidden md:flex gap-6">
-                <a className="text-white hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50" href="#features">
+                <a className="text-white hover:text-gray-900" href="#features">
                     Features
                 </a>
-                <a className="text-white hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50" href="#faq">
+                <a className="text-white hover:text-gray-900" href="#faq">
                     FAQ
                 </a>
-                <a className="text-white hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50" href="#">
+                <a className="text-white hover:text-gray-900" href="#">
                     Contact
                 </a>
             </nav>
@@ -112,10 +112,10 @@ function Landing() {
                             <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-5xl/none text-[#2B60C2]">
                                 Facilitate Your Life with Our Automated Video Cutting and Overlay Solution for Repost Videos!
                             </h1>
-                            <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                            <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                                 Transform your content into a TikTok-friendly format in just a few clicks, with automatic gameplay overlay for unparalleled impact!
                             </p>
-                            <p className="mx-auto max-w-[700px] font-bold md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                            <p className="mx-auto max-w-[700px] font-bold md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed ">
                                 Join the waitlist and get 5 free hours of video traitments with unlimited customized cut times !
                             </p>
 
@@ -124,11 +124,11 @@ function Landing() {
                         <div className="space-x-4 flex flex-col md:flex-row items-center space-y-4 md:space-y-0">
 
                             
-                            <a className="inline-flex h-9 items-center justify-center rounded-md border border-gray-200 border-gray-200 bg-white px-8 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 dark:border-gray-800 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800 dark:hover:text-gray-50 dark:focus-visible:ring-gray-300" href="#features">
+                            <a className="inline-flex h-9 items-center justify-center rounded-md border border-gray-200 border-gray-200 bg-white px-8 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#features">
                                 Learn More
                             </a>
                             <Input type="email" placeholder="Email" ref={ref} />
-                            <a onClick={joinWaitList}className="inline-flex h-9 items-center justify-center rounded-md bg-[#2B60C2] px-8 py-2 text-sm font-medium text-gray-50 shadow transition-colors hover:bg-[#2B60C2]/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-50/90" href="#">
+                            <a onClick={joinWaitList}className="inline-flex h-9 items-center justify-center rounded-md bg-[#2B60C2] px-8 py-2 text-sm font-medium text-gray-50 shadow transition-colors hover:bg-[#2B60C2]/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#">
                                 Join waitlist 
                             </a>
                             
@@ -136,7 +136,7 @@ function Landing() {
                     </div>
                 </div>
             </section>
-            <section className="w-full md:h-screen bg-[#2B60C2] dark:bg-gray-800 flex flex-col items-center" id="features">
+            <section className="w-full md:h-screen bg-[#2B60C2] flex flex-col items-center" id="features">
                 <div className="bg-[#e0f2fe] px-6 py-12 w-full">
                     <div className="max-w-md mx-auto text-center">
                         <h2 className="text-3xl font-bold mb-6">
@@ -163,29 +163,29 @@ function Landing() {
                 <div className="container px-4 md:px-6">
                     <div className="flex flex-col items-center justify-center space-y-4 text-center">
                         <div className="space-y-2">
-                            <div className="inline-block rounded-lg bg-[#2B60C2] mt-8 px-3 py-1 text-sm text-white dark:bg-gray-800">
+                            <div className="inline-block rounded-lg bg-[#2B60C2] mt-8 px-3 py-1 text-sm text-white">
                                 Automated Cutting and Overlay for TikTok/YouTube Shorts!
                             </div>
                             <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-white">
                                 Let Automation Take the Lead!
                             </h2>
-                            <p className="max-w-[900px] text-white md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                            <p className="max-w-[900px] text-white md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                                 Our solution automates according to parameters of your choice the cutting process while adding a gameplay overlay below. Get impactful TikTok reposts in no time!
                             </p>
                         </div>
                     </div>
                     <div className="mx-auto grid mt-8 gap-6 py-12 lg:grid-cols-5 lg:gap-12">
                         <div className="flex flex-col items-center space-y-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-white dark:text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-white ">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" x2="12" y1="3" y2="15"></line>
                             </svg>
                             <h3 className="text-xl font-bold text-white">Fast Import</h3>
-                            <p className="text-white dark:text-gray-400">Upload your YouTube videos in an instant.</p>
+                            <p className="text-white">Upload your YouTube videos in an instant.</p>
                         </div>
                         <div className="flex flex-col items-center space-y-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-white dark:text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-white">
                                 <path d="M12 8V4H8">
 
                                 </path>
@@ -196,17 +196,17 @@ function Landing() {
                                 <path d="M9 13v2"></path>
                             </svg>
                             <h3 className="text-xl font-bold text-white">Smart Automation</h3>
-                            <p className="text-white dark:text-gray-400">Our tool automatically cuts and overlays the gameplay.</p>
+                            <p className="text-white ">Our tool automatically cuts and overlays the gameplay.</p>
                         </div>
                         <div className="flex flex-col items-center space-y-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-white dark:text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-white ">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="9" cy="7" r="4"></circle>
                                 <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
                             <h3 className="text-xl font-bold text-white">Easy Customization</h3>
-                            <ul className="text-white dark:text-gray-400 flex flex-col space-y-4">
+                            <ul className="text-white flex flex-col space-y-4">
                                 <li>Set the minimum duration for each video.</li>
                                 <li>Specify all the times where the video should be cut.</li>
                                 <li>Set the minimum duration for each video plus a specified time in seconds for the video to start x seconds before the previous one ends.</li>
@@ -223,7 +223,7 @@ function Landing() {
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="h-12 w-12 text-white dark:text-gray-400"
+                                className="h-12 w-12 text-white "
                             >
                                 <path d="M7 13h4"></path>
                                 <path d="M15 13h2"></path>
@@ -232,7 +232,7 @@ function Landing() {
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z"></path>
                             </svg>
                             <h3 className="text-xl font-bold text-white">Automatic Subtitling</h3>
-                            <p className="text-white dark:text-gray-400">Add subtitles to your videos with a single click.</p>
+                            <p className="text-white">Add subtitles to your videos with a single click.</p>
                         </div>
                         <div className="flex flex-col items-center space-y-4">
                             <svg
@@ -245,7 +245,7 @@ function Landing() {
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="h-12 w-12 text-white dark:text-gray-400"
+                                className="h-12 w-12 text-white "
                             >
                                 <path d="m5 8 6 6"></path>
                                 <path d="m4 14 6-6 2-3"></path>
@@ -255,14 +255,14 @@ function Landing() {
                                 <path d="M14 18h6"></path>
                             </svg>
                             <h3 className="text-xl font-bold text-white">Language Conversion</h3>
-                            <p className="text-white dark:text-gray-400">
+                            <p className="text-white ">
                                 Our AI-powered tool can convert the language of your videos.
                             </p>
                         </div>
                     </div>
                 </div>
             </section>
-            <section className="w-full py-12 md:py-24 lg:py-32 bg-white dark:bg-gray-800 flex justify-center items-center" id="faq">
+            <section className="w-full py-12 md:py-24 lg:py-32 bg-white flex justify-center items-center" id="faq">
                 <div className="container px-4 md:px-6">
                     <div className="flex flex-col items-center justify-center space-y-4 text-center">
                         <div className="space-y-2">
@@ -275,38 +275,38 @@ function Landing() {
 
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]">How do I use the automation tool ?</summary>
-                            <p className="text-gray-500 dark:text-gray-400"> It's simple! Just upload your main YouTube video and gameplay, then click "Start" to begin the automation. Let our tool handle the heavy lifting for you.</p>
+                            <p className="text-gray-500 "> It's simple! Just upload your main YouTube video and gameplay, then click "Start" to begin the automation. Let our tool handle the heavy lifting for you.</p>
                         </details>
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]">Can I customize the duration of each video?</summary>
-                            <p className="text-gray-500 dark:text-gray-400">Absolutely! You have full control. You can specify the minimum duration of each video according to your preferences.</p>
+                            <p className="text-gray-500 ">Absolutely! You have full control. You can specify the minimum duration of each video according to your preferences.</p>
                         </details>
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]">Can I make the video starts before x seconds the previous one ended?</summary>
-                            <p className="text-gray-500 dark:text-gray-400">Yes, you have the flexibility to make the video start before x. Customize the start to create a smooth and captivating experience.</p>
+                            <p className="text-gray-500 ">Yes, you have the flexibility to make the video start before x. Customize the start to create a smooth and captivating experience.</p>
                         </details>
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]">How do I specify the moments to cut the video?</summary>
-                            <p className="text-gray-500 dark:text-gray-400">You have precise control over the cutting points! Simply indicate all the times you want to cut the video, and our tool will take care of the rest.</p>
+                            <p className="text-gray-500 ">You have precise control over the cutting points! Simply indicate all the times you want to cut the video, and our tool will take care of the rest.</p>
                         </details>
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]">Do I need to stay in front of the computer during the automation process?</summary>
-                            <p className="text-gray-500 dark:text-gray-400">No, our tool is designed to work in the background. You can start the automation process and attend to other tasks while the tool works for you.</p>
+                            <p className="text-gray-500 ">No, our tool is designed to work in the background. You can start the automation process and attend to other tasks while the tool works for you.</p>
                         </details>
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]"> Can I cancel the automation process in progress?</summary>
-                            <p className="text-gray-500 dark:text-gray-400">Yes, our tool is flexible. You can cancel the automation process at any time if you need to make adjustments or change your mind.</p>
+                            <p className="text-gray-500 ">Yes, our tool is flexible. You can cancel the automation process at any time if you need to make adjustments or change your mind.</p>
                         </details>
                         <details className="flex flex-col space-y-4">
                             <summary className="text-xl font-bold cursor-pointer text-[#2B60C2]">Where can I get help if I have additional questions?</summary>
-                            <p className="text-gray-500 dark:text-gray-400">For any additional questions, feel free to contact rakoto.killian@gmail.com . Here to assist you!</p>
+                            <p className="text-gray-500 ">For any additional questions, feel free to contact rakoto.killian@gmail.com . Here to assist you!</p>
                         </details>
                     </div>
                 </div>
             </section>
         </main>
         <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t border-[#2B60C2]">
-            <p className="text-xs text-[#2B60C2] dark:text-gray-400">
+            <p className="text-xs text-[#2B60C2] ">
                 © 2024 Munji. All rights reserved.
             </p><nav className="sm:ml-auto flex gap-4 sm:gap-6"><a className="text-xs hover:underline underline-offset-4 text-[#2B60C2]" href="#">
                 Terms of Service
