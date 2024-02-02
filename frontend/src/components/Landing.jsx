@@ -121,14 +121,14 @@ function Landing() {
 
                         </div>
 
-                        <div className="space-x-4 flex flex-col md:flex-row items-center space-y-4 md:space-y-0">
+                        <div className="md:space-x-4 flex flex-col md:flex-row items-center space-y-4 md:space-y-0">
 
                             
-                            <a className="inline-flex h-9 items-center justify-center rounded-md border border-gray-200 border-gray-200 bg-white px-8 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#features">
+                            <a className="inline-flex md:w-56 h-9 items-center justify-center rounded-md border border-gray-200 border-gray-200 bg-white px-8 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#features">
                                 Learn More
                             </a>
                             <Input type="email" placeholder="Email" ref={ref} />
-                            <a onClick={joinWaitList}className="inline-flex h-9 items-center justify-center rounded-md bg-[#2B60C2] px-8 py-2 text-sm font-medium text-gray-50 shadow transition-colors hover:bg-[#2B60C2]/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#">
+                            <a onClick={joinWaitList}className="inline-flex md:w-56 h-9 items-center justify-center rounded-md bg-[#2B60C2] px-8 py-2 text-sm font-medium text-gray-50 shadow-md transition-colors hover:bg-[#2B60C2]/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#">
                                 Join waitlist 
                             </a>
                             
