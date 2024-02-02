@@ -62,6 +62,9 @@ def deleteAll(db: Session = Depends(get_db)):
 
     return "All emails deleted"
 
-    
+
+@app.get("/")
+def home():
+    return "ok"
 
 
