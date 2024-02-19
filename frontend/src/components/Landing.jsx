@@ -34,31 +34,42 @@ function Landing() {
 
         e.preventDefault()
         console.log(ref.current.value)
-        if(ref.current.value != null){
-            
-            if(emailRegex.test(ref.current.value)){
+        if (ref.current.value != null) {
+
+            if (emailRegex.test(ref.current.value)) {
                 try {
-                    munjiAxios.post("/subscribe", {email: ref.current.value})
-                    .then((res) => {
- 
-                        if(res.status == 200){
-                            toast.info("Succesfully subscribed !")
-                        }
-                        
+                    fetch("http://localhost:8000/subscribe", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ email: ref.current.value })
                     })
-                    .catch((e) => {
-                        if(e.response.status == 429){
-                            toast.warning("Please wait before adding a new email.")
+                    .then(response => {
+                        if (response.ok) {
+                            toast.info("Successfully subscribed!");
+                        } else {
+                            if(response.status == 429){
+                                toast.warning("Please wait before adding a new email")
+                            }
+                            else if(response.status == 409){
+                                toast.warning("Email already subscribed.")
+                            }
                         }
-                        throw new Error('Error during the request')
                     })
+                        .catch((e) => {
+                            if (e.response.status == 429) {
+                                toast.warning("Please wait before adding a new email.")
+                            }
+                            throw new Error('Error during the request')
+                        })
 
                 }
-                catch(e){
+                catch (e) {
                     console.log("catch 2")
                     throw new Error('Error during the request')
                 }
-                
+
             }
             else {
                 console.log(ref.current.nodeValue)
@@ -71,10 +82,10 @@ function Landing() {
     }
 
     return <div className="flex flex-col min-h-screen bg-white">
-       
+
         <header className="flex items-center justify-between px-6 py-4 bg-[#2B60C2] ">
             <a className="flex mr-2 items-center gap-2 font-semibold" href="#">
-                <img src="logo.png" alt="" className="w-12 rounded-sm"/>
+                <img src="logo.png" alt="" className="w-12 rounded-sm" />
                 <span className="text-white">Munji</span>
             </a>
             <nav className="hidden md:flex gap-6">
@@ -88,14 +99,14 @@ function Landing() {
                     Contact
                 </a>
             </nav>
-            <button onClick={joinWaitList} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ml-auto bg-white text-[#2B60C2]">Join waitlist</button>
+            <a href="/signup" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ml-auto bg-white text-[#2B60C2]">Get started</a>
         </header>
         <main className="flex-1 flex flex-col justify-center items-center">
-            <section className="w-full h-screen my-28 md:my-0 py-12 md:py-24 lg:py-32 xl:py-48 flex justify-center align-baseline items-center">
+            <section className="w-full h-screen sm-h:my-28 md:my-0 py-12 md:py-24 lg:py-32 xl:py-48 flex justify-center align-baseline items-center">
 
-                <div className="container flex flex-col md:flex-row px-4 md:px-6">
+                <div className="container xs-h:mt-28 flex flex-col md:flex-row px-4 md:px-6">
 
-                    <div className="w-full flex justify-center mr-16 md:w-auto h-full">
+                    <div className="w-full flex  sm:mt-auto justify-center mr-16 md:w-auto h-full">
                         <div className="hidden md:block md:w-auto flex justify-center h-full items-center border-solid border-8 rounded-md mb-8 md:mb-0 duration-500" style={{ backgroundImage: `url(${slides[index].url})`, backgroundPosition: "center", height: 600, width: 300, objectFit: "cover", aspectRatio: 250 / 500 }}>
 
 
@@ -123,20 +134,20 @@ function Landing() {
 
                         <div className="md:space-x-4 flex flex-col md:flex-row items-center space-y-4 md:space-y-0">
 
-                            
+
                             <a className="inline-flex md:w-56 h-9 items-center justify-center rounded-md border border-gray-200 border-gray-200 bg-white px-8 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#features">
                                 Learn More
                             </a>
-                            <Input type="email" placeholder="Email" ref={ref} />
-                            <a onClick={joinWaitList}className="inline-flex md:w-56 h-9 items-center justify-center rounded-md bg-[#2B60C2] px-8 py-2 text-sm font-medium text-gray-50 shadow-md transition-colors hover:bg-[#2B60C2]/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50" href="#">
-                                Join waitlist 
+
+                            <a href="/signup" className="inline-flex md:w-56 h-9 items-center justify-center rounded-md bg-[#2B60C2] px-8 py-2 text-sm font-medium text-gray-50 shadow-md transition-colors hover:bg-[#2B60C2]/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50">
+                                Get Sarted
                             </a>
-                            
+
                         </div>
                     </div>
                 </div>
             </section>
-            <section className="w-full md:h-screen bg-[#2B60C2] flex flex-col items-center" id="features">
+            <section className="w-full xs-h:mt-28 md:h-screen bg-[#2B60C2] flex flex-col items-center" id="features">
                 <div className="bg-[#e0f2fe] px-6 py-12 w-full">
                     <div className="max-w-md mx-auto text-center">
                         <h2 className="text-3xl font-bold mb-6">

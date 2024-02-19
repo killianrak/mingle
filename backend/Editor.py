@@ -1,6 +1,6 @@
 from moviepy.editor import VideoFileClip
 import subprocess
-
+import os
 class Editor:
 
     def __init__(self, video_haute_path, video_basse_path):
@@ -14,6 +14,8 @@ class Editor:
         self.__video_basse_duree = self.__video_basse_clip.duration
     
     def traitementVideo(self):
+
+        print(os.getcwd())
         if self.__video_basse_duree > self.__video_haute_duree:
             cut_cmd = [
                 'ffmpeg',
@@ -35,7 +37,7 @@ class Editor:
                 '-c', 'copy', 
                 'assets/temp_basse_boucle.mp4'
             ]
-            subprocess.run(loop_cmd, check=True)
+            subprocess.run(loop_cmd,check=True, shell=True)
             self.__video_basse_path = 'assets/temp_basse_boucle.mp4'
 
 

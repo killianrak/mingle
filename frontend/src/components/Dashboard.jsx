@@ -4,17 +4,18 @@ import { CutTimes, Times } from './CutTimes'
 import { v4 as uuidv4 } from 'uuid';
 import { Toaster, toast } from 'sonner'
 import { Status } from './Status';
+import { redirect } from "react-router-dom";
 
 const LOADING = 0
 const ERROR = 1
 const SUCCESS = 2
 const EMPTY = 3
 
-function Dashboard({setLoading, load, setCurrentState, currentState}) {
+function Dashboard({ setLoading, load, setCurrentState, currentState }) {
+
     console.log("dashboard rendered")
-
+    const [loadAll, setLoadAll] = useState(false)
     const refCut = useRef(null)
-
     const [minute, setMinute] = useState(0)
     const [seconds, setSeconds] = useState(0)
     const [allTimes, setAllTimes] = useState({})
@@ -22,10 +23,19 @@ function Dashboard({setLoading, load, setCurrentState, currentState}) {
     const [previousLength, setPreviousLength] = useState(0);
     const [videoFile, setVideoFile] = useState(null)
     const [gameplayFile, setGameplayFile] = useState(null)
+    const [files, setFiles] = useState([])
     const [minimumMinutes, setMinimumMinutes] = useState(null)
     const [startBefore, setStartBefore] = useState(null)
 
     const [error, setError] = useState('')
+
+    const handleVideo = (e) => {
+        setVideoFile(e.target.files[0])
+    }
+
+    const handleGameplay = (e) => {
+        setGameplayFile(e.target.files[0])
+    }
 
     const close = () => {
         if (!refCut.current.classList.contains('hidden')) {
@@ -179,7 +189,7 @@ function Dashboard({setLoading, load, setCurrentState, currentState}) {
 
                 setLoading(true)
                 setCurrentState(LOADING)
-                await fetch("https://jsonplaceholder.typicode.com/posts?_delay=7013")
+                fetch("http://localhost:8000/traitement-minimum")
                 console.log("terminé")
                 setLoading(false)
                 setCurrentState(SUCCESS)
@@ -195,8 +205,10 @@ function Dashboard({setLoading, load, setCurrentState, currentState}) {
 
     }
 
+
     return <>
-        <div className="flex-col h-screen py-8 px-8 md:py-0 md:px-0">
+
+       <div className="flex-col h-screen py-8 px-8 md:py-0 md:px-0">
 
             <div className="flex flex-col flex-grow">
 
@@ -207,8 +219,8 @@ function Dashboard({setLoading, load, setCurrentState, currentState}) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-4 md:flex md:flex-col">
 
-                            <Input name="Youtube Video" type="file" id="youtube-video" readOnly={false} onChange={setVideoFile} accept={"video/*"} />
-                            <Input name="Gameplay Video" type="file" id="gameplay-video" readOnly={false} onChange={setGameplayFile} accept={"video/*"} />
+                            <Input name="Youtube Video" type="file" id="youtube-video" readOnly={false} onChange={handleVideo} accept={"video/*"} />
+                            <Input name="Gameplay Video" type="file" id="gameplay-video" readOnly={false} onChange={handleGameplay} accept={"video/*"} />
 
                             <Input name="Minimum duration in minutes" type="number" id="minimum-duration" readOnly={false} onChange={setMinimumMinutes} />
                             <Input name="Start Before X Seconds the minimum duration" type="number" id="start-before" readOnly={false} onChange={setStartBefore} />
@@ -256,7 +268,7 @@ function Dashboard({setLoading, load, setCurrentState, currentState}) {
             </div>
         </div>
         <Toaster richColors closeButton />
-    </>
+        </>
 
 }
 

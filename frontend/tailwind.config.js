@@ -2,7 +2,12 @@
 export default {
   content: ["src/**/*.{html,jsx}", "app/**/*.{ts,tsx,jsx}", "components/**/*.{ts,tsx, jsx}"],
   theme: {
-    extend: {},
+    extend: {
+      screens: { 
+        'xs-h': { 'raw': '(max-height: 605px)' }, 
+        'sm-h': {'raw': '(max-height: 670px)'},
+      }
+    },
   },
   plugins: [],
 }

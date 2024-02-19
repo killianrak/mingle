@@ -19,3 +19,5 @@ services:
     container_name: munji-front-container
     ports:
       - "8080:8080"
+    volumes:
+      - ./frontend/src/components:/app/src/components

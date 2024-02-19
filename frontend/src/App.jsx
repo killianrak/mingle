@@ -5,7 +5,8 @@ import { HeaderMemo } from './components/Header'
 import { Dashboard } from './components/Dashboard'
 import { Settings } from './components/Settings'
 import { Landing } from './components/Landing';
-
+import { Login } from './components/Login';
+import { Signup } from './components/Signup';
 const LoadingContext = createContext();
 
 const router = createBrowserRouter([
@@ -27,7 +28,16 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <Landing />
+  },
+  {
+    path: '/signin',
+    element: <Login />
+  },
+  {
+    path: '/signup',
+    element: <Signup />
   }
+  
  
 
 ])
@@ -47,11 +57,30 @@ function Body() {
 
   const [loading, setLoading] = useState(false)
   const [currentState, setCurrentState] = useState(EMPTY)
-
+  const [allLoad, setLoadAll] = useState(false)
   console.log("rerender body")
   const ref = useRef(null)
+
+  
+  fetch("http://localhost:8000/check-cookie", {
+    method: "GET",
+    credentials: "include",
+    headers: {
+        'accept': 'application/json'
+    }  // Inclure les cookies dans la requête
+    })
+    .then(response => {
+        if (response.status !== 200) {
+            window.location.href = "/signin"
+        }
+        else {
+          setLoadAll(true)
+        }
+        
+    })
+
   return <LoadingContext.Provider value={{ loading, setLoading, currentState, setCurrentState }}>
-    <div className="flex">
+    {allLoad && <div className="flex">
       <NavbarMemo refButton={ref} />
 
       <div className="flex flex-col flex-grow">
@@ -60,7 +89,10 @@ function Body() {
         <Outlet />
       </div>
     </div>
+    }
   </LoadingContext.Provider>
+  
+
 }
 
 function DashboardWithContext() {
