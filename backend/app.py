@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import json
 from typing import Annotated
@@ -61,8 +62,9 @@ async def traitement_video(video_data: str,video_upload: UploadFile, gameplay_up
     editor.traitementVideo()
     
     result = editor.divideEachXMinutes(video_minimum_duration.divide_each_minutes)
-    Timer(3, editor.clearAll).start()
+    Timer(5, editor.clearAll).start()
     return result
+
 
 @app.post("/traitement-before")
 async def traitement_video(video: VideoStartBefore, video_upload: UploadFile, gameplay_upload: UploadFile):

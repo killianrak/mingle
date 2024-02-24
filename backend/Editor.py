@@ -1,9 +1,12 @@
+import asyncio
 from fastapi.responses import FileResponse
 from moviepy.editor import VideoFileClip
 import subprocess
 import os
 import zipfile
+
 class Editor:
+
 
     def __init__(self, video_haute_path, video_basse_path):
         self.__largeur_cible = 1080
@@ -17,8 +20,7 @@ class Editor:
         self.__video_basse_duree = self.__video_basse_clip.duration
     
     def traitementVideo(self):
-        self.__video_delete.append(self.__video_basse_path)
-        self.__video_delete.append(self.__video_haute_path)
+        
         if self.__video_basse_duree > self.__video_haute_duree:
             cut_cmd = [
                 'ffmpeg',
@@ -28,7 +30,6 @@ class Editor:
                 'assets/temp_basse_coupee.mp4'
             ]
             subprocess.run(cut_cmd, check=True)
-            self.__video_basse_path = 'assets/temp_basse_coupee.mp4'
 
         elif self.__video_haute_duree > self.__video_basse_duree:
             print("Loop de la vidéo basse...")
@@ -37,23 +38,18 @@ class Editor:
                 '-stream_loop', '-1',
                 '-i', self.__video_basse_path,
                 '-t', str(self.__video_haute_duree),
-                '-c', 'copy', 
+                '-c', 'copy',
                 'assets/temp_basse_boucle.mp4'
             ]
-            subprocess.run(loop_cmd,check=True)
-            self.__video_basse_path = 'assets/temp_basse_boucle.mp4'
-        self.__video_delete.append(self.__video_basse_path)
-    
-    def clearAll(self):
-        for chemin in self.__video_delete:
-            try:
-                os.remove(chemin)
-                print(f"La vidéo à {chemin} a été supprimée avec succès.")
-            except FileNotFoundError:
-                print(f"La vidéo à {chemin} n'a pas été trouvée.")
-            except Exception as e:
-                print(f"Une erreur s'est produite lors de la suppression de la vidéo à {chemin}: {e}")
-    
+
+            subprocess.run(loop_cmd, check=True)
+        self.__video_basse_clip.close()
+
+        os.remove(self.__video_basse_path)
+        self.__video_basse_path = 'assets/temp_basse_boucle.mp4'
+        self.__video_delete.append('assets/temp_basse_boucle.mp4')
+        
+   
     def downloadZip(self, video_parts):
         zip_filename = 'assets/video_parts.zip'
         with zipfile.ZipFile(zip_filename, 'w') as zip_file:
@@ -69,6 +65,14 @@ class Editor:
         self.__video_delete.append(zip_filename)
         # Renvoyer le fichier zip en tant que réponse
         return FileResponse(zip_filename, media_type='application/zip', filename='video_parts.zip')
+    
+    def clearAll(self):
+        for chemin in self.__video_delete:
+            try:
+                os.remove(chemin)
+                print(f"Fichier {chemin} supprimé.")
+            except Exception as e:
+                print(f"Error de suppresion de {chemin} : {e}")    
 
 
     def divideEachXMinutes(self, x):
@@ -140,6 +144,8 @@ class Editor:
         # Sauvegarder chaque partie
         for v in video_parts:
             subprocess.run(v)
+        self.__video_haute_clip.close()
+        os.remove(self.__video_haute_path)
         return self.downloadZip(video_parts)
             
 
