@@ -8,10 +8,12 @@ import uuid
 
 class Editor:
 
+
     def __init__(self, video_haute_path, video_basse_path):
         self.__delete_videos = []
         self.__largeur_cible = 1080
         self.__hauteur_cible = 1920
+        self.__video_delete = []
         self.__video_haute_path = video_haute_path
         self.__video_basse_path = video_basse_path
         self.__video_haute_clip = VideoFileClip(video_haute_path)
@@ -101,7 +103,6 @@ class Editor:
                 f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
                 "[haute][bas]vstack",
                 '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                '-r', '60',  # Définir une fréquence d'images
                 '-profile:v', 'high',  # Profil de l'encodeur
                 '-level', '4.2',  # Niveau de l'encodeur
                 '-vsync', '2', 
@@ -109,7 +110,6 @@ class Editor:
         ]
             # Ajouter la partie à la liste
             video_parts.append(cmd)
-
             # Mettre à jour les variables pour la prochaine partie
             start_time = end_time
             part_index += 1
@@ -131,7 +131,6 @@ class Editor:
                 f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
                 "[haute][bas]vstack",
                 '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                '-r', '60',  # Définir une fréquence d'images
                 '-profile:v', 'high',  # Profil de l'encodeur
                 '-level', '4.2',  # Niveau de l'encodeur
                 '-vsync', '2', 
