@@ -1,9 +1,15 @@
+import asyncio
 from moviepy.editor import VideoFileClip
 import subprocess
 import os
+import zipfile
+from fastapi.responses import FileResponse
+import uuid 
+
 class Editor:
 
     def __init__(self, video_haute_path, video_basse_path):
+        self.__delete_videos = []
         self.__largeur_cible = 1080
         self.__hauteur_cible = 1920
         self.__video_haute_path = video_haute_path
@@ -12,20 +18,22 @@ class Editor:
         self.__video_basse_clip = VideoFileClip(video_basse_path)
         self.__video_haute_duree = self.__video_haute_clip.duration
         self.__video_basse_duree = self.__video_basse_clip.duration
+
     
     def traitementVideo(self):
-
-        print(os.getcwd())
+        #self.__delete_videos.append(self.__video_haute_path)
+        #self.__delete_videos.append(self.__video_basse_path)
+        id = uuid.uuid4()
+        
         if self.__video_basse_duree > self.__video_haute_duree:
             cut_cmd = [
                 'ffmpeg',
                 '-i', self.__video_basse_path,
                 '-t', str(self.__video_haute_duree),
                 '-c', 'copy',
-                'assets/temp_basse_coupee.mp4'
+                f'assets/{id}.mp4'
             ]
             subprocess.run(cut_cmd, check=True)
-            self.__video_basse_path = 'assets/temp_basse_coupee.mp4'
 
         elif self.__video_haute_duree > self.__video_basse_duree:
             print("Loop de la vidéo basse...")
@@ -35,13 +43,34 @@ class Editor:
                 '-i', self.__video_basse_path,
                 '-t', str(self.__video_haute_duree),
                 '-c', 'copy', 
-                'assets/temp_basse_boucle.mp4'
+                f'assets/{id}.mp4'
             ]
-            subprocess.run(loop_cmd,check=True, shell=True)
-            self.__video_basse_path = 'assets/temp_basse_boucle.mp4'
+            subprocess.run(loop_cmd,check=True)
+        os.remove(self.__video_basse_path)
+        self.__video_basse_path = f'assets/{id}.mp4'
+        self.__delete_videos.append(f'assets/{id}.mp4')
 
+    def downloadVideos(self, videos):
+        zip_filename = 'assets/video_parts.zip'
+        with zipfile.ZipFile(zip_filename, 'w') as zip_file:
+            # Ajouter chaque vidéo au fichier zip
+            for i, v in enumerate(videos, start=1):
+                video_filename = f'assets/video_part_{i}.mp4'
+                zip_file.write(video_filename, os.path.basename(video_filename))
 
-    def divideEachXMinutes(self, x):
+        # Supprimer les fichiers individuels après les avoir ajoutés au zip
+        for i in range(1, len(videos) + 1):
+            video_filename = f'assets/video_part_{i}.mp4'
+            os.remove(video_filename)
+
+        return zip_filename
+    
+    def clearAll(self):
+        for file_path in self.__delete_videos:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                
+    async def divideEachXMinutes(self, x):
 
         # Durée minimale souhaitée pour chaque partie en secondes
         min_part_duration = x * 60  # x minutes
@@ -60,6 +89,7 @@ class Editor:
 
             # Découper la partie de la vidéo
             output_video_path = f'assets/video_part_{part_index}.mp4'
+            self.__delete_videos.append(output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -75,7 +105,6 @@ class Editor:
                 '-profile:v', 'high',  # Profil de l'encodeur
                 '-level', '4.2',  # Niveau de l'encodeur
                 '-vsync', '2', 
-                '-b:v', '5000k',
                 output_video_path
         ]
             # Ajouter la partie à la liste
@@ -88,9 +117,12 @@ class Editor:
         if float(video_parts[-1][8]) - float(video_parts[-1][6]) < min_part_duration and len(video_parts) >= 2:
             last_part = video_parts.pop()
             second_last_part = video_parts.pop()
+            part_index -= 2
+            last_output_video_path = f'assets/video_part_{part_index}.mp4'
+            self.__delete_videos.append(last_output_video_path)
             cmd = [
                 'ffmpeg',
-                '-i', self.__video_haute_path,
+                '-i', self.__video_basse_path,
                 '-i', self.__video_basse_path,
                 '-ss', str(second_last_part[6]),
                 '-to', str(last_part[8]),
@@ -103,14 +135,25 @@ class Editor:
                 '-profile:v', 'high',  # Profil de l'encodeur
                 '-level', '4.2',  # Niveau de l'encodeur
                 '-vsync', '2', 
-                '-b:v', '5000k',
-                output_video_path
+                '-b:v', '1000k',
+                last_output_video_path
             ]
             video_parts.append(cmd)
 
         # Sauvegarder chaque partie
-        for v in video_parts:
-            subprocess.run(v)
+        # for v in video_parts:
+        results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
+            # proc = await asyncio.create_subprocess_exec(*v, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            # output, errors = await proc.communicate()
+        os.remove(self.__video_haute_path)
+        zip_filename = self.downloadVideos(video_parts)
+        self.__delete_videos.append(zip_filename)
+        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
+
+    async def run_subprocess(self, v):
+        proc = await asyncio.create_subprocess_exec(*v, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        output, errors = await proc.communicate()
+        return output, errors
 
     def startNextVideoBeforeXSeconds(self, min_duration, x):
         # Durée minimale souhaitée pour chaque partie en secondes
