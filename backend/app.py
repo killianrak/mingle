@@ -8,7 +8,6 @@ from BaseModel.Video import VideoMinimumDuration, VideoStartBefore, VideoCheckPo
 from BaseModel.WaitList import WaitList as Waiter
 from BaseModel.CreateUsers import CreateUser
 from Editor import Editor
-from core.Models import WaitList
 import core.Models as Models
 from core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -18,8 +17,9 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 import re
 from services.services import Services
-from BaseModel.Auth import Token, User
-import os
+import time
+from threading import Timer
+
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
@@ -59,7 +59,10 @@ async def traitement_video(video_data: str,video_upload: UploadFile, gameplay_up
     print(save_video)
     editor = Editor(save_video,save_gameplay)
     editor.traitementVideo()
-    editor.divideEachXMinutes(video_minimum_duration.divide_each_minutes)
+    
+    result = editor.divideEachXMinutes(video_minimum_duration.divide_each_minutes)
+    Timer(3, editor.clearAll).start()
+    return result
 
 @app.post("/traitement-before")
 async def traitement_video(video: VideoStartBefore, video_upload: UploadFile, gameplay_upload: UploadFile):
