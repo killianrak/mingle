@@ -1,14 +1,10 @@
 from datetime import datetime, timedelta, timezone
-import json
-from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordBearer
 import magic
-from BaseModel.Auth import TokenData, UserInDB
-from BaseModel.Video import VideoMinimumDuration
+from BaseModel.Auth import UserInDB
 from core.Models import Users
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+from jose import jwt
 from sqlalchemy.orm import Session
 import os
 
@@ -123,3 +119,25 @@ class Services:
             os.remove(save_video)
             raise HTTPException(status_code=422, detail="Seuls les fichiers vidéo sont autorisés")
  
+    def checkCookie(self, request: Request):
+        try:
+            print(request.cookies)
+            # Obtenez le cookie d'accès de la requête
+            access_token_cookie = request.cookies.get("access_token", "")
+
+            # Vérifiez si le cookie est présent
+            if not access_token_cookie:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Cookie d'accès manquant",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+        except HTTPException as e:
+            raise e  # Transmettez les exceptions HTTP directement
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Cookie d'accès invalide",
+                headers={"WWW-Authenticate": "Bearer"},
+            )     

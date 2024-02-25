@@ -1,4 +1,5 @@
 import asyncio
+from fastapi import HTTPException
 from moviepy.editor import VideoFileClip
 import subprocess
 import os
@@ -173,7 +174,12 @@ class Editor:
 
             print(end_time)
             if part_index > 1:
-                start_time -= gap_between_parts
+                if gap_between_parts < start_time:
+                    start_time -= gap_between_parts
+                else:
+                    self.clearAll()
+                    os.remove(self.__video_haute_path)
+                    raise HTTPException(status_code=422, detail="Veuillez spécifier un gap ingérieur à la durée de la vidéo")
 
             # Découper la partie de la vidéo
             output_video_path = f'assets/{uuid.uuid4()}.mp4'
@@ -240,13 +246,19 @@ class Editor:
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
 
             
-    async def divideWithCheckPoints(self, checkpointRanges):
+    async def divideWithCheckPoints(self, checkpointRanges): #[300, 600, 900]
         output_folder = 'assets/'
-
+        video_parts = []
         hauteur_moitié = self.__hauteur_cible // 2
+        start_time = 0
         
-        for i, (start_time, end_time) in enumerate(checkpointRanges):
-            output_video_path = f'{output_folder}video_part_{i+1}.mp4'
+        for end_time in checkpointRanges:
+            if float(end_time) > self.__video_haute_duree:
+                self.clearAll()
+                os.remove(self.__video_haute_path)
+                raise HTTPException(status_code=422, detail="Vous avez spécifié un cut time supérieur à la durée de la vidéo.")
+            output_video_path = f'{output_folder}{uuid.uuid4()}.mp4'
+            self.__cutted_videos.append(output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -265,36 +277,42 @@ class Editor:
                 '-b:v', '5000k',
                 output_video_path
             ]
-            subprocess.run(cmd, check=True)
+            start_time = end_time
+            video_parts.append(cmd)
+            #subprocess.run(cmd, check=True)
             
-        last_start_time = checkpointRanges[-1][1]  # Utiliser la fin du dernier checkpoint comme début
+        last_start_time = checkpointRanges[-1]  # Utiliser la fin du dernier checkpoint comme début
         last_end_time = self.__video_haute_duree  # Utiliser la fin de la vidéo comme fin
-        last_output_video_path = f'{output_folder}video_part_{len(checkpointRanges)+1}.mp4'
-        cmd = [
-                'ffmpeg',
-                '-i', self.__video_haute_path,
-                '-i', self.__video_basse_path,
-                '-ss', str(last_start_time),
-                '-to', str(last_end_time),
-                '-filter_complex',
-                f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
-                f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
-                "[haute][bas]vstack",
-                '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                '-r', '60',  # Définir une fréquence d'images
-                '-profile:v', 'high',  # Profil de l'encodeur
-                '-level', '4.2',  # Niveau de l'encodeur
-                '-vsync', '2', 
-                '-b:v', '5000k',
-                last_output_video_path
-            ]
-        subprocess.run(cmd)
+        if float(last_start_time) < last_end_time:
+            last_output_video_path = f'{output_folder}{uuid.uuid4()}.mp4'
+            self.__cutted_videos.append(last_output_video_path)
+            cmd = [
+                    'ffmpeg',
+                    '-i', self.__video_haute_path,
+                    '-i', self.__video_basse_path,
+                    '-ss', str(last_start_time),
+                    '-to', str(last_end_time),
+                    '-filter_complex',
+                    f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
+                    f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
+                    "[haute][bas]vstack",
+                    '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+                    '-r', '60',  # Définir une fréquence d'images
+                    '-profile:v', 'high',  # Profil de l'encodeur
+                    '-level', '4.2',  # Niveau de l'encodeur
+                    '-vsync', '2', 
+                    '-b:v', '5000k',
+                    last_output_video_path
+                ]
+            video_parts.append(cmd)
+        results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
+        os.remove(self.__video_haute_path)
+        zip_filename = self.downloadVideos(self.__cutted_videos)
+        self.__delete_videos.append(zip_filename)
+        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
 
-# s = Editor(1080, 1920, "assets/video_haute.mp4", "assets/video_basse.mp4")
-# s.traitementVideo()
-# s.startNextVideoBeforeXSeconds(5, 5)
 
-        
+  
 
 
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, Tuple
+from typing import List
 
 class VideoMinimumDuration(BaseModel):
     divide_each_minutes: int
@@ -9,4 +9,4 @@ class VideoStartBefore(BaseModel):
     start_before: int
 
 class VideoCheckPoints(BaseModel):
-    checkpoints: List[Tuple[str, str]]
+    checkpoints: List[str]

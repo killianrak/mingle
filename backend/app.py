@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+
 from datetime import datetime, timedelta, timezone
 import json
 from typing import Annotated
@@ -10,7 +10,6 @@ from BaseModel.Video import VideoMinimumDuration, VideoStartBefore, VideoCheckPo
 from BaseModel.WaitList import WaitList as Waiter
 from BaseModel.CreateUsers import CreateUser
 from Editor import Editor
-from BaseModel.Auth import TokenData
 import core.Models as Models
 from core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -21,7 +20,6 @@ from slowapi.util import get_remote_address
 import re
 from services.services import Services
 from threading import Timer
-from jose import JWTError, jwt
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -52,11 +50,14 @@ services = Services(db = Depends(get_db))
 #editor = Editor("assets/video.mp4", "assets/video.mp4")
     
 @app.post("/traitement-minimum")
-async def traitement_video(video_upload: UploadFile, gameplay_upload: UploadFile, video_data: str):
+async def traitement_video(request: Request, video_upload: UploadFile, gameplay_upload: UploadFile, video_data: str):
     video = json.loads(video_data)
     #Validate against Pydantic model
     try:
+        services.checkCookie(request)
         video_minimum_duration = VideoMinimumDuration(**video)
+    except HTTPException as e:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     except ValidationError as e:
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     save_video = await services.save_file(video_upload)
@@ -73,10 +74,13 @@ async def traitement_video(video_upload: UploadFile, gameplay_upload: UploadFile
 
         
 @app.post("/traitement-before")
-async def traitement_video(video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
+async def traitement_video(request: Request, video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
     video = json.loads(video_data)
     try:
+        services.checkCookie(request)
         video_start_before = VideoStartBefore(**video)
+    except HTTPException as e:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     except ValidationError as e:
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     
@@ -92,10 +96,13 @@ async def traitement_video(video_data: str, video_upload: UploadFile, gameplay_u
     return result
 
 @app.post("/traitement-checkpoints")
-async def traitement_video(video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
+async def traitement_video(request: Request, video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
     video = json.loads(video_data)
     try:
-        video_start_before = VideoStartBefore(**video)
+        services.checkCookie(request)
+        video_checkpoints = VideoCheckPoints(**video)
+    except HTTPException as e:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     except ValidationError as e:
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     
@@ -106,7 +113,7 @@ async def traitement_video(video_data: str, video_upload: UploadFile, gameplay_u
     
     editor = Editor(save_video, save_gameplay)
     editor.traitementVideo()
-    result = await editor.divideWithCheckPoints(video.checkpoints)
+    result = await editor.divideWithCheckPoints(video_checkpoints.checkpoints)
     Timer(3, editor.clearAll).start()
     return result
 
@@ -171,27 +178,7 @@ async def login_for_access_token(
 @app.get("/check-cookie")
 @limiter.limit("30/minute")
 async def check_cookie(request: Request):
-    try:
-        print(request.cookies)
-        # Obtenez le cookie d'accès de la requête
-        access_token_cookie = request.cookies.get("access_token", "")
-
-        # Vérifiez si le cookie est présent
-        if not access_token_cookie:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Cookie d'accès manquant",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-    except HTTPException as e:
-        raise e  # Transmettez les exceptions HTTP directement
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Cookie d'accès invalide",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    return services.checkCookie(request)
 
     
 @app.get("/logout")
