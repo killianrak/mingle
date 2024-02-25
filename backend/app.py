@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Request, HTTPException, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import ValidationError
 from BaseModel.Video import VideoMinimumDuration, VideoStartBefore, VideoCheckPoints
 from BaseModel.WaitList import WaitList as Waiter
 from BaseModel.CreateUsers import CreateUser
@@ -47,13 +48,16 @@ def get_db():
 
 services = Services(db = Depends(get_db))     
 #editor = Editor("assets/video.mp4", "assets/video.mp4")
-
+    
 @app.post("/traitement-minimum")
-async def traitement_video(video_data: str,video_upload: UploadFile, gameplay_upload: UploadFile):
+async def traitement_video(video_upload: UploadFile, gameplay_upload: UploadFile, video_data: str):
     video = json.loads(video_data)
-
+    print(video)
     #Validate against Pydantic model
-    video_minimum_duration = VideoMinimumDuration(divide_each_minutes=video.get("divide_each_minutes"))
+    try:
+        video_minimum_duration = VideoMinimumDuration(**video)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     save_video = await services.save_file(video_upload)
     save_gameplay = await services.save_file(gameplay_upload)
 

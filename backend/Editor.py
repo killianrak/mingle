@@ -13,7 +13,7 @@ class Editor:
         self.__delete_videos = []
         self.__largeur_cible = 1080
         self.__hauteur_cible = 1920
-        self.__video_delete = []
+        self.__cutted_videos = []
         self.__video_haute_path = video_haute_path
         self.__video_basse_path = video_basse_path
         self.__video_haute_clip = VideoFileClip(video_haute_path)
@@ -23,8 +23,6 @@ class Editor:
 
     
     def traitementVideo(self):
-        #self.__delete_videos.append(self.__video_haute_path)
-        #self.__delete_videos.append(self.__video_basse_path)
         id = uuid.uuid4()
         
         if self.__video_basse_duree > self.__video_haute_duree:
@@ -53,17 +51,16 @@ class Editor:
         self.__delete_videos.append(f'assets/{id}.mp4')
 
     def downloadVideos(self, videos):
+
         zip_filename = 'assets/video_parts.zip'
         with zipfile.ZipFile(zip_filename, 'w') as zip_file:
             # Ajouter chaque vidéo au fichier zip
-            for i, v in enumerate(videos, start=1):
-                video_filename = f'assets/video_part_{i}.mp4'
-                zip_file.write(video_filename, os.path.basename(video_filename))
+            for v in videos:
+                zip_file.write(v, os.path.basename(v))
 
         # Supprimer les fichiers individuels après les avoir ajoutés au zip
-        for i in range(1, len(videos) + 1):
-            video_filename = f'assets/video_part_{i}.mp4'
-            os.remove(video_filename)
+        for v in videos:
+            os.remove(v)
 
         return zip_filename
     
@@ -90,8 +87,9 @@ class Editor:
             end_time = min(start_time + min_part_duration, self.__video_haute_duree)
 
             # Découper la partie de la vidéo
-            output_video_path = f'assets/video_part_{part_index}.mp4'
-            self.__delete_videos.append(output_video_path)
+            output_video_path = f'assets/{uuid.uuid4()}.mp4'
+            self.__cutted_videos.append(output_video_path)
+            #self.__delete_videos.append(output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -116,10 +114,13 @@ class Editor:
         # Fusionner les deux dernières parties si la dernière partie est inférieure à la durée minimale
         if float(video_parts[-1][8]) - float(video_parts[-1][6]) < min_part_duration and len(video_parts) >= 2:
             last_part = video_parts.pop()
+            self.__cutted_videos.pop()
             second_last_part = video_parts.pop()
+            self.__cutted_videos.pop()
             part_index -= 2
-            last_output_video_path = f'assets/video_part_{part_index}.mp4'
-            self.__delete_videos.append(last_output_video_path)
+            last_output_video_path = f'assets/{uuid.uuid4()}.mp4'
+            #self.__delete_videos.append(last_output_video_path)
+            self.__cutted_videos.append(last_output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_basse_path,
@@ -139,13 +140,9 @@ class Editor:
             ]
             video_parts.append(cmd)
 
-        # Sauvegarder chaque partie
-        # for v in video_parts:
         results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
-            # proc = await asyncio.create_subprocess_exec(*v, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-            # output, errors = await proc.communicate()
         os.remove(self.__video_haute_path)
-        zip_filename = self.downloadVideos(video_parts)
+        zip_filename = self.downloadVideos(self.__cutted_videos)
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
 
