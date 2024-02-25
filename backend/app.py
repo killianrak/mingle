@@ -10,6 +10,7 @@ from BaseModel.Video import VideoMinimumDuration, VideoStartBefore, VideoCheckPo
 from BaseModel.WaitList import WaitList as Waiter
 from BaseModel.CreateUsers import CreateUser
 from Editor import Editor
+from BaseModel.Auth import TokenData
 import core.Models as Models
 from core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -20,6 +21,7 @@ from slowapi.util import get_remote_address
 import re
 from services.services import Services
 from threading import Timer
+from jose import JWTError, jwt
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -52,7 +54,6 @@ services = Services(db = Depends(get_db))
 @app.post("/traitement-minimum")
 async def traitement_video(video_upload: UploadFile, gameplay_upload: UploadFile, video_data: str):
     video = json.loads(video_data)
-    print(video)
     #Validate against Pydantic model
     try:
         video_minimum_duration = VideoMinimumDuration(**video)
@@ -60,6 +61,8 @@ async def traitement_video(video_upload: UploadFile, gameplay_upload: UploadFile
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     save_video = await services.save_file(video_upload)
     save_gameplay = await services.save_file(gameplay_upload)
+
+    services.checkVideoFormat(save_video, save_gameplay)
 
     editor = Editor(save_video,save_gameplay)
     editor.traitementVideo()
@@ -70,20 +73,42 @@ async def traitement_video(video_upload: UploadFile, gameplay_upload: UploadFile
 
         
 @app.post("/traitement-before")
-async def traitement_video(video: VideoStartBefore, video_upload: UploadFile, gameplay_upload: UploadFile):
+async def traitement_video(video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
+    video = json.loads(video_data)
+    try:
+        video_start_before = VideoStartBefore(**video)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
+    
     save_video = await services.save_file(video_upload)
     save_gameplay = await services.save_file(gameplay_upload)
+    
+    services.checkVideoFormat(save_video, save_gameplay)
+    
     editor = Editor(save_video, save_gameplay)
     editor.traitementVideo()
-    editor.startNextVideoBeforeXSeconds(video.divide_each_minutes, video.start_before)
+    result = await editor.startNextVideoBeforeXSeconds(video_start_before.divide_each_minutes, video_start_before.start_before)
+    Timer(3, editor.clearAll).start()
+    return result
 
 @app.post("/traitement-checkpoints")
-async def traitement_video(video: VideoCheckPoints, video_upload: UploadFile, gameplay_upload: UploadFile):
+async def traitement_video(video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
+    video = json.loads(video_data)
+    try:
+        video_start_before = VideoStartBefore(**video)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
+    
     save_video = await services.save_file(video_upload)
     save_gameplay = await services.save_file(gameplay_upload)
+    
+    services.checkVideoFormat(save_video, save_gameplay)
+    
     editor = Editor(save_video, save_gameplay)
     editor.traitementVideo()
-    editor.divideWithCheckPoints(video.checkpoints)
+    result = await editor.divideWithCheckPoints(video.checkpoints)
+    Timer(3, editor.clearAll).start()
+    return result
 
        
 @app.post("/subscribe")
@@ -117,14 +142,16 @@ def home():
     return "ok"
 
 @app.post("/signup")
-def create_user(data: CreateUser, db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+def create_user(request: Request, data: CreateUser, db: Session = Depends(get_db)):
     services.create_new_user(data, db)
     payload = {"message": "User account has been succesfully created"}
     return JSONResponse(content=payload)
 
 @app.post("/token")
+@limiter.limit("30/minute")
 async def login_for_access_token(
-     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response, db: Session = Depends(get_db)
+     request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response, db: Session = Depends(get_db)
 ):
     user = services.authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -142,6 +169,7 @@ async def login_for_access_token(
     return {"message": "Come to the dark side, we have cookies"}
 
 @app.get("/check-cookie")
+@limiter.limit("30/minute")
 async def check_cookie(request: Request):
     try:
         print(request.cookies)
@@ -164,7 +192,9 @@ async def check_cookie(request: Request):
             detail="Cookie d'accès invalide",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     
 @app.get("/logout")
+@limiter.limit("30/minute")
 def logout(response : Response, request : Request):
   response.set_cookie(key = "access_token", value="")

@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta, timezone
+import json
 from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
+import magic
 from BaseModel.Auth import TokenData, UserInDB
+from BaseModel.Video import VideoMinimumDuration
 from core.Models import Users
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -18,7 +21,7 @@ class Services:
     def __init__(self, db: Session):
 
         self.__pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        self.__db = db
+        self.db = db
 
     def get_password_hash(self, password):
         return self.__pwd_context.hash(password)
@@ -35,19 +38,6 @@ class Services:
         db.add(new_user)
         db.commit()
         return new_user
-
-
-
-# fake_users_db = {
-#     "johndoe": {
-#         "username": "johndoe",
-#         "full_name": "John Doe",
-#         "email": "johndoe@example.com",
-#         "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-#         "disabled": False,
-#     }
-# }
-
 
     def verify_password(self, plain_password, hashed_password):
         return self.__pwd_context.verify(plain_password, hashed_password)
@@ -76,27 +66,26 @@ class Services:
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_jwt
+    
 
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-    async def get_current_user(self,db, token: Annotated[str, Depends(oauth2_scheme)]):
-        credentials_exception = HTTPException(
-            status_code= status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        try:
-            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            username: str = payload.get("sub")
-            if username is None:
-                raise credentials_exception
-            token_data = TokenData(username=username)
-        except JWTError:
-            raise credentials_exception
-        user = self.get_user(db, username=token_data.username)
-        if user is None:
-            raise credentials_exception
-        return user
+    # async def get_current_user(self, token: str = Depends(oauth2_scheme)):
+    #     credentials_exception = HTTPException(
+    #         status_code= status.HTTP_401_UNAUTHORIZED,
+    #         detail="Could not validate credentials",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+    #     try:
+    #         payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+    #         username: str = payload.get("sub")
+    #         if username is None:
+    #             raise credentials_exception
+    #         token_data = TokenData(username=username)
+    #     except JWTError:
+    #         raise credentials_exception
+    #     user = self.get_user(db, username=token_data.username)
+    #     if user is None:
+    #         raise credentials_exception
+    #     return user
     
     async def save_file(self, file_upload):
         data = await file_upload.read()
@@ -117,5 +106,20 @@ class Services:
             f.write(data)
 
         return save_to
-    
 
+    def checkVideoFormat(self, save_video, save_gameplay):
+        mime = magic.Magic(mime=True)
+        video_file_type = mime.from_file(save_video)      
+        gameplay_file_type = mime.from_file(save_gameplay)
+        
+        video_filename = os.path.basename(save_video)
+        gameplay_filename = os.path.basename(save_gameplay)
+        if video_filename == gameplay_filename:
+            os.remove(save_video)
+            os.remove(save_gameplay)
+            raise HTTPException(status_code=422, detail="Les deux videos doivent être differentes.")
+        
+        if  video_file_type.find("video") == -1 or gameplay_file_type.find("video") == -1:
+            os.remove(save_video)
+            raise HTTPException(status_code=422, detail="Seuls les fichiers vidéo sont autorisés")
+ 

@@ -33,7 +33,10 @@ class Editor:
                 '-c', 'copy',
                 f'assets/{id}.mp4'
             ]
-            subprocess.run(cut_cmd, check=True)
+            subprocess.run(cut_cmd,check=True)
+            os.remove(self.__video_basse_path)
+            self.__video_basse_path = f'assets/{id}.mp4'
+            self.__delete_videos.append(f'assets/{id}.mp4')
 
         elif self.__video_haute_duree > self.__video_basse_duree:
             print("Loop de la vidéo basse...")
@@ -46,13 +49,15 @@ class Editor:
                 f'assets/{id}.mp4'
             ]
             subprocess.run(loop_cmd,check=True)
-        os.remove(self.__video_basse_path)
-        self.__video_basse_path = f'assets/{id}.mp4'
-        self.__delete_videos.append(f'assets/{id}.mp4')
+            os.remove(self.__video_basse_path)
+            print("video removed")
+            self.__video_basse_path = f'assets/{id}.mp4'
+            self.__delete_videos.append(f'assets/{id}.mp4')
+        self.__delete_videos.append(self.__video_basse_path)
 
     def downloadVideos(self, videos):
 
-        zip_filename = 'assets/video_parts.zip'
+        zip_filename = f'assets/{uuid.uuid4()}.zip'
         with zipfile.ZipFile(zip_filename, 'w') as zip_file:
             # Ajouter chaque vidéo au fichier zip
             for v in videos:
@@ -70,7 +75,7 @@ class Editor:
                 os.remove(file_path)
                 
     async def divideEachXMinutes(self, x):
-
+        print("traitement...")
         # Durée minimale souhaitée pour chaque partie en secondes
         min_part_duration = x * 60  # x minutes
 
@@ -117,13 +122,12 @@ class Editor:
             self.__cutted_videos.pop()
             second_last_part = video_parts.pop()
             self.__cutted_videos.pop()
-            part_index -= 2
             last_output_video_path = f'assets/{uuid.uuid4()}.mp4'
             #self.__delete_videos.append(last_output_video_path)
             self.__cutted_videos.append(last_output_video_path)
             cmd = [
                 'ffmpeg',
-                '-i', self.__video_basse_path,
+                '-i', self.__video_haute_path,
                 '-i', self.__video_basse_path,
                 '-ss', str(second_last_part[6]),
                 '-to', str(last_part[8]),
@@ -151,7 +155,7 @@ class Editor:
         output, errors = await proc.communicate()
         return output, errors
 
-    def startNextVideoBeforeXSeconds(self, min_duration, x):
+    async def startNextVideoBeforeXSeconds(self, min_duration, x):
         # Durée minimale souhaitée pour chaque partie en secondes
         min_part_duration = min_duration * 60  # x minutes
         gap_between_parts = x
@@ -172,7 +176,8 @@ class Editor:
                 start_time -= gap_between_parts
 
             # Découper la partie de la vidéo
-            output_video_path = f'assets/video_part_{part_index}.mp4'
+            output_video_path = f'assets/{uuid.uuid4()}.mp4'
+            self.__cutted_videos.append(output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -202,7 +207,11 @@ class Editor:
         # Fusionner les deux dernières parties si la dernière partie est inférieure à la durée minimale
         if float(video_parts[-1][8]) - float(video_parts[-1][6]) < min_part_duration and len(video_parts) >= 2:
             last_part = video_parts.pop()
+            self.__cutted_videos.pop()
             second_last_part = video_parts.pop()
+            self.__cutted_videos.pop()
+            last_output_video_path = f'assets/{uuid.uuid4()}.mp4'
+            self.__cutted_videos.append(last_output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -219,16 +228,19 @@ class Editor:
                 '-level', '4.2',  # Niveau de l'encodeur
                 '-vsync', '2', 
                 '-b:v', '5000k',
-                output_video_path
+                last_output_video_path
             ]
             video_parts.append(cmd)
 
         # Sauvegarder chaque partie
-        for v in video_parts:
-            subprocess.run(v)
+        results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
+        os.remove(self.__video_haute_path)
+        zip_filename = self.downloadVideos(self.__cutted_videos)
+        self.__delete_videos.append(zip_filename)
+        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
 
             
-    def divideWithCheckPoints(self, checkpointRanges):
+    async def divideWithCheckPoints(self, checkpointRanges):
         output_folder = 'assets/'
 
         hauteur_moitié = self.__hauteur_cible // 2
