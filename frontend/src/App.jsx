@@ -62,22 +62,32 @@ function Body() {
   const ref = useRef(null)
 
   
-  fetch("http://localhost:8000/check-cookie", {
-    method: "GET",
-    credentials: "include",
-    headers: {
-        'accept': 'application/json'
-    }  // Inclure les cookies dans la requête
+  useEffect(() => {
+    // Use a flag to ensure fetch is called only once
+    let isMounted = true;
+    if(isMounted){
+    fetch("http://localhost:8000/check-cookie", {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        accept: "application/json",
+      },
     })
-    .then(response => {
-        if (response.status !== 200) {
-            window.location.href = "/signin"
-        }
-        else {
-          setLoadAll(true)
-        }
+      .then((response) => {
+
+          if (response.status !== 200) {
+            window.location.href = "/signin";
+          } else {
+            setLoadAll(true);
+          }
         
-    })
+      });
+    }
+    // Cleanup function to set isMounted to false when the component is unmounted
+    return () => {
+      isMounted = false;
+    };
+  }, []); 
 
   return <LoadingContext.Provider value={{ loading, setLoading, currentState, setCurrentState }}>
     {allLoad && <div className="flex">

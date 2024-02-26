@@ -50,6 +50,7 @@ services = Services(db = Depends(get_db))
 #editor = Editor("assets/video.mp4", "assets/video.mp4")
     
 @app.post("/traitement-minimum")
+@limiter.limit("30/minute")
 async def traitement_video(request: Request, video_upload: UploadFile, gameplay_upload: UploadFile, video_data: str):
     video = json.loads(video_data)
     #Validate against Pydantic model
@@ -74,6 +75,7 @@ async def traitement_video(request: Request, video_upload: UploadFile, gameplay_
 
         
 @app.post("/traitement-before")
+@limiter.limit("30/minute")
 async def traitement_video(request: Request, video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
     video = json.loads(video_data)
     try:
@@ -96,6 +98,7 @@ async def traitement_video(request: Request, video_data: str, video_upload: Uplo
     return result
 
 @app.post("/traitement-checkpoints")
+@limiter.limit("30/minute")
 async def traitement_video(request: Request, video_data: str, video_upload: UploadFile, gameplay_upload: UploadFile):
     video = json.loads(video_data)
     try:

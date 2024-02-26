@@ -30,11 +30,13 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
     const [error, setError] = useState('')
 
     const handleVideo = (e) => {
-        setVideoFile(e.target.files[0])
+        console.log(e)
+        setVideoFile(e)
     }
 
     const handleGameplay = (e) => {
-        setGameplayFile(e.target.files[0])
+
+        setGameplayFile(e)
     }
 
     const close = () => {
@@ -164,41 +166,74 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
 
     }
 
+    const downloadToFile = (content, filename, contentType) => {
+        const a = document.createElement('a');
+        const file = new Blob([content], { type: contentType });
+    
+        a.href = URL.createObjectURL(file);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
     const handleSubmit = async () => {
         let controlPassed = true
-        // if (!videoFile && !gameplayFile) {
-        //     toast.error("Les deux vidéos doivent être renseignées")
-        //     controlPassed = false
-        // }
-        // if (Object.keys(allTimes).length > 0 && (minimumMinutes != null || startBefore != null)) {
-        //     toast.error("Si vous choisissez de personnaliser les times cut, vous ne pouvez ni spécifier de durée minimum, ni commencer X secondes avant.")
-        //     controlPassed = false
-        // }
-        // if (startBefore != null && minimumMinutes == null) {
-        //     toast.error("Si vous décidez de commencer chaques cut X secondes avant, veuillez renseigner une durée minimum pour chaques vidéos")
-        //     controlPassed = false
-        // }
-        // if (Object.keys(allTimes).length == 0 && minimumMinutes == null) {
-        //     toast.error("Veuillez au minimum rentrer soit une durée minimum pour chaques vidéos, soit des times cut personnalisés.")
-        //     controlPassed = false
-        // }
+        if (!videoFile || !gameplayFile) {
+            toast.error("Les deux vidéos doivent être renseignées")
+            controlPassed = false
+        }
+        if (Object.keys(allTimes).length > 0 && (minimumMinutes != null || startBefore != null)) {
+            toast.error("Si vous choisissez de personnaliser les times cut, vous ne pouvez ni spécifier de durée minimum, ni commencer X secondes avant.")
+            controlPassed = false
+        }
+        if (startBefore != null && minimumMinutes == null) {
+            toast.error("Si vous décidez de commencer chaques cut X secondes avant, veuillez renseigner une durée minimum pour chaques vidéos")
+            controlPassed = false
+        }
+        if (Object.keys(allTimes).length == 0 && minimumMinutes == null) {
+            toast.error("Veuillez au minimum rentrer soit une durée minimum pour chaques vidéos, soit des times cut personnalisés.")
+            controlPassed = false
+        }
 
         if (controlPassed) {
+            console.log(videoFile)
             console.log("Controlled passed")
-            try {
+            const formData = new FormData()
 
-                setLoading(true)
-                setCurrentState(LOADING)
-                fetch("http://localhost:8000/traitement-minimum")
-                console.log("terminé")
-                setLoading(false)
-                setCurrentState(SUCCESS)
+            if(minimumMinutes && startBefore == null){
+                const video_data = {'divide_each_minutes': minimumMinutes}
+                formData.append("video_upload", videoFile)
+                formData.append("gameplay_upload", gameplayFile)
 
+                try {
 
-            } catch (e) {
+                    setLoading(true)
+                    setCurrentState(LOADING)
+                    const res = await fetch(`http://localhost:8000/traitement-minimum?video_data=${encodeURIComponent(JSON.stringify(video_data))}`,
+                    {
+                        method: "POST",
+                        credentials: "include",
+                        body: formData
+                    })
+                    console.log("terminé")
+                    setLoading(false)
+                    setCurrentState(SUCCESS)
+                    if(res.status == 200){
+                        const content = await res.blob()
+                        downloadToFile(content, "munji_video.zip", res.headers["content-type"])                        
+                    }
+                    else{
+                        const error = await res.json()
+                        throw new Error(error.detail)
+                    }
 
-                setCurrentState(ERROR)
-                setError(e.message)
+    
+    
+                } catch (e) {
+    
+                    setCurrentState(ERROR)
+                    setError(e.message)
+                }
             }
         }
 

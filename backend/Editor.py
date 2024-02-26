@@ -21,8 +21,7 @@ class Editor:
         self.__video_basse_clip = VideoFileClip(video_basse_path)
         self.__video_haute_duree = self.__video_haute_clip.duration
         self.__video_basse_duree = self.__video_basse_clip.duration
-
-    
+   
     def traitementVideo(self):
         id = uuid.uuid4()
         
@@ -157,6 +156,7 @@ class Editor:
         return output, errors
 
     async def startNextVideoBeforeXSeconds(self, min_duration, x):
+        
         # Durée minimale souhaitée pour chaque partie en secondes
         min_part_duration = min_duration * 60  # x minutes
         gap_between_parts = x
@@ -243,9 +243,7 @@ class Editor:
         os.remove(self.__video_haute_path)
         zip_filename = self.downloadVideos(self.__cutted_videos)
         self.__delete_videos.append(zip_filename)
-        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
-
-            
+        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)            
     async def divideWithCheckPoints(self, checkpointRanges): #[300, 600, 900]
         output_folder = 'assets/'
         video_parts = []
