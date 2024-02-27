@@ -44,6 +44,34 @@ function Settings() {
 
   }
 
+  const deleteAccount = async () => {
+    const res = await fetch("http://localhost:8000/delete_account", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+    })
+    if(res.status == 200)
+    {
+      const logout = await fetch("http://localhost:8000/logout", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          'accept': 'application/json'
+        }
+      }).then(res => {
+        if(res.status == 200){
+          window.location.href="/signin"
+        }
+      })
+    }
+    else {
+      const resError = res.json()
+      toast.error(resError.detail)
+    }
+  }
   return <main className="w-full h-screen max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
     <h1 className="text-3xl font-bold text-center">Account Settings</h1>
     <div className="mt-6 space-y-12">
@@ -123,7 +151,7 @@ function Settings() {
           <p className="text-sm text-muted-foreground">Deactivate your account.</p>
         </div>
         <div className="p-6">
-          <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-red-600">
+          <button onClick={deleteAccount} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-red-600">
             Deactivate Account
           </button>
         </div>
