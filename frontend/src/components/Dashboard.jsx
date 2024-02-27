@@ -4,7 +4,6 @@ import { CutTimes, Times } from './CutTimes'
 import { v4 as uuidv4 } from 'uuid';
 import { Toaster, toast } from 'sonner'
 import { Status } from './Status';
-import { redirect } from "react-router-dom";
 
 const LOADING = 0
 const ERROR = 1
@@ -14,7 +13,6 @@ const EMPTY = 3
 function Dashboard({ setLoading, load, setCurrentState, currentState }) {
 
     console.log("dashboard rendered")
-    const [loadAll, setLoadAll] = useState(false)
     const refCut = useRef(null)
     const [minute, setMinute] = useState(0)
     const [seconds, setSeconds] = useState(0)
@@ -23,11 +21,30 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
     const [previousLength, setPreviousLength] = useState(0);
     const [videoFile, setVideoFile] = useState(null)
     const [gameplayFile, setGameplayFile] = useState(null)
-    const [files, setFiles] = useState([])
     const [minimumMinutes, setMinimumMinutes] = useState(null)
     const [startBefore, setStartBefore] = useState(null)
-
+    const [startBeforeOption, setStartBeforeOption] = useState(false)
+    const [customCutOption, setCustomCutOption] = useState(false)
     const [error, setError] = useState('')
+
+    const handleStartBeforeOption = (e) => {
+        setStartBeforeOption(e.target.checked)
+        if(customCutOption)
+        {
+            setCustomCutOption(!e.target.checked)
+        }
+        
+    }
+
+    const handleCutOption = (e) => {
+        setCustomCutOption(e.target.checked)
+        if(startBeforeOption)
+        {
+            setStartBeforeOption(!e.target.checked)
+        }
+        
+    }
+    
 
     const handleVideo = (e) => {
         console.log(e)
@@ -176,70 +193,91 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
         URL.revokeObjectURL(a.href);
     }
 
+    const fetchData = async (video_data, endpoint) => {
+        const formData = new FormData()
+        formData.append("video_upload", videoFile)
+        formData.append("gameplay_upload", gameplayFile)
+
+        try {
+
+            setLoading(true)
+            setCurrentState(LOADING)
+            const res = await fetch(`http://localhost:8000/${endpoint}?video_data=${encodeURIComponent(JSON.stringify(video_data))}`,
+            {
+                method: "POST",
+                credentials: "include",
+                body: formData
+            })
+            setLoading(false)
+            setCurrentState(SUCCESS)
+            if(res.status == 200){
+                const content = await res.blob()
+                downloadToFile(content, "munji_video.zip", res.headers["content-type"])                        
+            }
+            else{
+                const error = await res.json()
+                throw new Error(error.detail)
+            }
+
+
+
+        } catch (e) {
+
+            setCurrentState(ERROR)
+            setError(e.message)
+        }
+    }
     const handleSubmit = async () => {
         let controlPassed = true
         if (!videoFile || !gameplayFile) {
             toast.error("Les deux vidéos doivent être renseignées")
             controlPassed = false
         }
-        if (Object.keys(allTimes).length > 0 && (minimumMinutes != null || startBefore != null)) {
+        if (Object.keys(allTimes).length > 0 && (minimumMinutes != null && minimumMinutes != 0 || startBefore != null && startBefore != 0)) {
             toast.error("Si vous choisissez de personnaliser les times cut, vous ne pouvez ni spécifier de durée minimum, ni commencer X secondes avant.")
             controlPassed = false
         }
-        if (startBefore != null && minimumMinutes == null) {
+        if ((startBefore != null && startBefore != 0) && (minimumMinutes == 0 && minimumMinutes == null)) {
             toast.error("Si vous décidez de commencer chaques cut X secondes avant, veuillez renseigner une durée minimum pour chaques vidéos")
             controlPassed = false
         }
-        if (Object.keys(allTimes).length == 0 && minimumMinutes == null) {
+        if (Object.keys(allTimes).length == 0 && (minimumMinutes == null || minimumMinutes == 0)) {
             toast.error("Veuillez au minimum rentrer soit une durée minimum pour chaques vidéos, soit des times cut personnalisés.")
             controlPassed = false
         }
 
         if (controlPassed) {
-            console.log(videoFile)
-            console.log("Controlled passed")
-            const formData = new FormData()
 
-            if(minimumMinutes && startBefore == null){
+            if((minimumMinutes && minimumMinutes != 0) && (startBefore == null || startBefore == 0)){
                 const video_data = {'divide_each_minutes': minimumMinutes}
-                formData.append("video_upload", videoFile)
-                formData.append("gameplay_upload", gameplayFile)
+                const endpoint = "traitement-minimum"
+                fetchData(video_data, endpoint)
 
-                try {
-
-                    setLoading(true)
-                    setCurrentState(LOADING)
-                    const res = await fetch(`http://localhost:8000/traitement-minimum?video_data=${encodeURIComponent(JSON.stringify(video_data))}`,
-                    {
-                        method: "POST",
-                        credentials: "include",
-                        body: formData
-                    })
-                    console.log("terminé")
-                    setLoading(false)
-                    setCurrentState(SUCCESS)
-                    if(res.status == 200){
-                        const content = await res.blob()
-                        downloadToFile(content, "munji_video.zip", res.headers["content-type"])                        
-                    }
-                    else{
-                        const error = await res.json()
-                        throw new Error(error.detail)
-                    }
-
-    
-    
-                } catch (e) {
-    
-                    setCurrentState(ERROR)
-                    setError(e.message)
-                }
             }
+            else if((minimumMinutes && minimumMinutes != 0) && (startBefore && startBefore != 0)){
+                const video_data = {'divide_each_minutes': minimumMinutes, 'start_before': startBefore}
+                const endpoint = "traitement-before"
+                fetchData(video_data, endpoint)
+        }
+        else if(Object.keys(allTimes).length > 0)
+        {
+            let allCheckPoints = []
+            Object.keys(allTimes).forEach(e => {
+                console.log(allTimes[e].props.time)
+                let time = allTimes[e].props.time
+                time = time.slice(0, -1);
+                time = time.split("\"")
+                let checkPointsSeconds = (parseInt(time[0]) * 60) + parseInt(time[1])
+                allCheckPoints.push(String(checkPointsSeconds))
+            })
+            const video_data = {"checkpoints": allCheckPoints}
+            const endpoint = "traitement-checkpoints"
+            fetchData(video_data, endpoint)
         }
 
 
     }
-
+}
 
     return <>
 
@@ -257,12 +295,12 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
                             <Input name="Youtube Video" type="file" id="youtube-video" readOnly={false} onChange={handleVideo} accept={"video/*"} />
                             <Input name="Gameplay Video" type="file" id="gameplay-video" readOnly={false} onChange={handleGameplay} accept={"video/*"} />
 
-                            <Input name="Minimum duration in minutes" type="number" id="minimum-duration" readOnly={false} onChange={setMinimumMinutes} />
-                            <Input name="Start Before X Seconds the minimum duration" type="number" id="start-before" readOnly={false} onChange={setStartBefore} />
-                            <CutTimes name="Precise all the cut times" times={allTimes} />
-                            <button onClick={show} className="flex flex-start bg-sky-700 text-white p-2 pl-4 rounded-md w-24 text-center">
+                            {!customCutOption && <Input name="Minimum duration in minutes" type="number" id="minimum-duration" readOnly={false} onChange={setMinimumMinutes} value={minimumMinutes}/>}
+                            {startBeforeOption && <Input name="Start before X seconds the last video ended" type="number" id="start-before" readOnly={false} onChange={setStartBefore} value={startBefore}/>}
+                            {customCutOption && <CutTimes name="Precise all the cut times" times={allTimes} />}
+                            {customCutOption && <button onClick={show} className="flex flex-start bg-sky-700 text-white p-2 pl-4 rounded-md w-24 text-center">
                                 Add cut
-                            </button>
+                            </button>}
 
                             <div ref={refCut} className="flex space-x-10 bg-gray-100/40 w-64 rounded-md bg-sky-700 hidden">
                                 <div>
@@ -294,6 +332,23 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
                         </div>
                         <div className="space-y-4">
                             <Status name="Status" state={currentState} error={error} loading={load} />
+                            <div className="flex flex-col bg-slate-100 rounded-md p-4">
+                                <h1 className="text-center font-bold">Options</h1>
+                                <div className="flex flex-row-reverse justify-end mt-4">
+                                        <div className="flex flex-col">
+                                            <label htmlFor="start-before-check" className="cursor-pointer">Start before X seconds the last video ended</label>
+                                            <label htmlFor="all-cut-times" className="pr-4 cursor-pointer">Precise the customized cut times</label>              
+                                        </div>
+                                        <div className="flex flex-col justify-around mr-4">
+                                            <input checked={startBeforeOption} onChange={handleStartBeforeOption} name="start-before-check" type="checkbox" id="start-before-check" className="cursor-pointer"/>  
+                                            <input checked={customCutOption} onChange={handleCutOption}name="all-cut-times" type="checkbox" id="all-cut-times" className="cursor-pointer"/>                                      
+                                        </div>                                      
+                                </div>
+                                  
+
+                              
+                            </div>
+
                         </div>
 
 

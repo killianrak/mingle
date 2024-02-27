@@ -1,4 +1,4 @@
-function Input({name, type, id, readOnly, onChange, accept}){
+function Input({name, type, id, readOnly, onChange, accept, value}){
 
   if(accept){
       return <div className="space-y-2">
@@ -34,6 +34,7 @@ function Input({name, type, id, readOnly, onChange, accept}){
       type={type}
       readOnly={readOnly}
       onChange={(e) => onChange(e.target.value)}
+      value={value}
     /></div> 
   }
    

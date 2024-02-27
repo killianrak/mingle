@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { Input } from "../../components/ui/input";
 import { Toaster, toast } from 'sonner'
 
-import { munjiAxios } from "../scripts/axiosConfig.js";
+
 
 function Landing() {
 

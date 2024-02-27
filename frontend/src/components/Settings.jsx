@@ -1,7 +1,50 @@
 import { Input } from "./Input"
+import { useState } from "react"
+import { Toaster, toast } from 'sonner'
 
-function Settings(){
-    return <main className="w-full max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+function Settings() {
+
+  const [currentPwd, setCurrentPwd] = useState(null)
+  const [newPwd, setNewPwd] = useState(null)
+
+  console.log(currentPwd + " " + newPwd)
+  const update_pwd = (e) => {
+    setCurrentPwd(e)
+  }
+
+  const new_pwd = (e) => {
+    setNewPwd(e)
+  }
+
+  const changePassword = async () => {
+    if (currentPwd != null && newPwd != null) {
+      const data = {currentpwd: currentPwd, newpwd: newPwd}
+      const res = await fetch("http://localhost:8000/update_password", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (res.status != 200) {
+        const res_error = await res.json()
+        toast.error(res_error.detail)
+      }
+      else {
+        toast.info("Password changed succesfully.")
+      }
+    }
+
+    else {
+      toast.warning("Please fill all the fields")
+    }
+
+  }
+
+  return <main className="w-full h-screen max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
     <h1 className="text-3xl font-bold text-center">Account Settings</h1>
     <div className="mt-6 space-y-12">
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
@@ -10,16 +53,16 @@ function Settings(){
           <p className="text-sm text-muted-foreground">Update your account password.</p>
         </div>
         <div className="p-6 space-y-4">
-          <Input name="Current Password" type="password" id="currentpassword" />
-          <Input name="New password" type="password" id="newpassword" />
+          <Input name="Current Password" type="password" id="currentpassword" onChange={update_pwd} value={currentPwd} />
+          <Input name="New password" type="password" id="newpassword" onChange={new_pwd} value={newPwd} />
         </div>
         <div className="flex items-center p-6">
-          <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ml-auto">
+          <button onClick={changePassword} className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ml-auto">
             Update Password
           </button>
         </div>
       </div>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
+      {/* <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
         <div className="flex flex-col space-y-1.5 p-6">
           <h3 className="text-2xl font-semibold whitespace-nowrap leading-none tracking-tight">
             Licenses &amp; Subscriptions
@@ -31,8 +74,8 @@ function Settings(){
             View Licenses &amp; Subscriptions
           </button>
         </div>
-      </div>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
+      </div> */}
+      {/* <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
         <div className="flex flex-col space-y-1.5 p-6">
           <h3 className="text-2xl font-semibold whitespace-nowrap leading-none tracking-tight">Personal Information</h3>
           <p className="text-sm text-muted-foreground">Update your personal information.</p>
@@ -46,8 +89,8 @@ function Settings(){
             Update Information
           </button>
         </div>
-      </div>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
+      </div> */}
+      {/* <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
         <div className="flex flex-col space-y-1.5 p-6">
           <h3 className="text-2xl font-semibold whitespace-nowrap leading-none tracking-tight">
             Advanced Security Settings
@@ -73,7 +116,7 @@ function Settings(){
             </label>
           </div>
         </div>
-      </div>
+      </div> */}
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
         <div className="flex flex-col space-y-1.5 p-6">
           <h3 className="text-2xl font-semibold whitespace-nowrap leading-none tracking-tight">Account Deactivation</h3>
@@ -86,7 +129,8 @@ function Settings(){
         </div>
       </div>
     </div>
-    </main>
+    <Toaster richColors closeButton />
+  </main>
 }
 
-export {Settings}
+export { Settings }

@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, Request, status
 import magic
-from BaseModel.Auth import UserInDB
+from BaseModel.Auth import TokenData, UserInDB
 from core.Models import Users
 from passlib.context import CryptContext
-from jose import jwt
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 import os
 
@@ -64,24 +64,24 @@ class Services:
         return encoded_jwt
     
 
-    # async def get_current_user(self, token: str = Depends(oauth2_scheme)):
-    #     credentials_exception = HTTPException(
-    #         status_code= status.HTTP_401_UNAUTHORIZED,
-    #         detail="Could not validate credentials",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    #     try:
-    #         payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-    #         username: str = payload.get("sub")
-    #         if username is None:
-    #             raise credentials_exception
-    #         token_data = TokenData(username=username)
-    #     except JWTError:
-    #         raise credentials_exception
-    #     user = self.get_user(db, username=token_data.username)
-    #     if user is None:
-    #         raise credentials_exception
-    #     return user
+    async def get_current_user(self, token: str, db):
+        credentials_exception = HTTPException(
+            status_code= status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        try:
+            payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
+            username: str = payload.get("sub")
+            if username is None:
+                raise credentials_exception
+            token_data = TokenData(username=username)
+        except JWTError:
+            raise credentials_exception
+        user = self.get_user(db, username=token_data.username)
+        if user is None:
+            raise credentials_exception
+        return user
     
     async def save_file(self, file_upload):
         data = await file_upload.read()
@@ -140,4 +140,29 @@ class Services:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Cookie d'accès invalide",
                 headers={"WWW-Authenticate": "Bearer"},
-            )     
+            ) 
+            
+    async def update_password(self, request: Request, password, db: Session):
+        access_token_cookie = request.cookies.get("access_token", "")
+        jwt_token = access_token_cookie.split(" ")[1]
+        user = await self.get_current_user(jwt_token, db)
+        user_to_update = db.query(Users).filter(Users.email == user.email).first()
+        if user_to_update is None:
+            raise HTTPException(status_code=422, detail="An error occured. Try again later")
+        if not self.verify_password(password.currentpwd, user_to_update.password):
+            raise HTTPException(status_code=401, detail="The insered password doesn't correspond to your actual password")
+        user_to_update.password = self.get_password_hash(password.newpwd)
+        db.commit()    
+    
+    async def delete_account(self, request: Request, db: Session):
+        access_token_cookie = request.cookies.get("access_token", "")
+        jwt_token = access_token_cookie.split(" ")[1]
+        user = await self.get_current_user(jwt_token, db)
+        user_to_update = db.query(Users).filter(Users.email == user.email).first()
+        if user_to_update is None:
+            raise HTTPException(status_code=422, detail="An error occured. Try again later")
+        db.delete(user_to_update)
+        db.commit()
+        
+        
+        

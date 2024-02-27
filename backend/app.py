@@ -10,6 +10,7 @@ from BaseModel.Video import VideoMinimumDuration, VideoStartBefore, VideoCheckPo
 from BaseModel.WaitList import WaitList as Waiter
 from BaseModel.CreateUsers import CreateUser
 from Editor import Editor
+from BaseModel.Password import Password
 import core.Models as Models
 from core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -58,7 +59,7 @@ async def traitement_video(request: Request, video_upload: UploadFile, gameplay_
         services.checkCookie(request)
         video_minimum_duration = VideoMinimumDuration(**video)
     except HTTPException as e:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="La session a expiré, veuillez vous reconnecter.")
     except ValidationError as e:
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     save_video = await services.save_file(video_upload)
@@ -82,7 +83,7 @@ async def traitement_video(request: Request, video_data: str, video_upload: Uplo
         services.checkCookie(request)
         video_start_before = VideoStartBefore(**video)
     except HTTPException as e:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="La session a expiré, veuillez vous reconnecter.")
     except ValidationError as e:
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     
@@ -105,7 +106,7 @@ async def traitement_video(request: Request, video_data: str, video_upload: Uplo
         services.checkCookie(request)
         video_checkpoints = VideoCheckPoints(**video)
     except HTTPException as e:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="La session a expiré, veuillez vous reconnecter.")
     except ValidationError as e:
         raise HTTPException(status_code=422, detail="Format JSON invalide pour video_data")
     
@@ -174,9 +175,21 @@ async def login_for_access_token(
     access_token = services.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True, samesite="lax", expires=datetime.now(timezone.utc) + access_token_expires)
+    response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True, samesite="lax")
 
     return {"message": "Come to the dark side, we have cookies"}
+
+@app.post("/update_password")
+@limiter.limit("30/minute")
+async def change_password(request: Request, password: Password, db: Session = Depends(get_db)):
+    services.checkCookie(request)
+    await services.update_password(request, password, db)
+
+@app.post("/delete_account")
+@limiter.limit("30/minute")  
+async def delete_account(request: Request, db: Session = Depends(get_db)):
+    services.checkCookie(request) 
+    await services.delete_account(request, db)
 
 @app.get("/check-cookie")
 @limiter.limit("30/minute")
