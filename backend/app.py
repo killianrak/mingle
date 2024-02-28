@@ -11,6 +11,7 @@ from BaseModel.WaitList import WaitList as Waiter
 from BaseModel.CreateUsers import CreateUser
 from Editor import Editor
 from BaseModel.Password import Password
+from BaseModel.Auth import GoogleToken
 import core.Models as Models
 from core.database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -21,7 +22,7 @@ from slowapi.util import get_remote_address
 import re
 from services.services import Services
 from threading import Timer
-
+import requests
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
@@ -40,6 +41,10 @@ app.add_middleware(
     
 )
 
+GOOGLE_CLIENT_ID = "187182171657-rbmd0v93623vrj9o270sm83ntlmiqk1n.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
+GOOGLE_REDIRECT_URI = "http://localhost:8080/signin"
+
 def get_db():
     try:
         db = SessionLocal()
@@ -49,7 +54,33 @@ def get_db():
 
 services = Services(db = Depends(get_db))     
 #editor = Editor("assets/video.mp4", "assets/video.mp4")
+
+@app.get("/login/google")
+async def login_google():
+    return {
+        "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URI}&scope=openid%20profile%20email&access_type=offline"
+    }
     
+@app.post("/auth/google")
+async def auth_google(code: GoogleToken, response: Response):
+    print(code.idToken)
+    token_url = "https://accounts.google.com/o/oauth2/token"
+    data = {
+        "code": code.idToken,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "grant_type": "authorization_code",
+    }
+    res = requests.post(token_url, data=data)
+    access_token = res.json().get("access_token")
+    resJson = res.json()
+    if "error" in resJson:
+        raise HTTPException(status_code=401, detail="Authentication failed.")
+    user_info = requests.get("https://www.googleapis.com/oauth2/v1/userinfo", headers={"Authorization": f"Bearer {access_token}"})
+    response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True, samesite="lax")
+    return user_info.json()
+
 @app.post("/traitement-minimum")
 @limiter.limit("30/minute")
 async def traitement_video(request: Request, video_upload: UploadFile, gameplay_upload: UploadFile, video_data: str):

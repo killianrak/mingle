@@ -121,7 +121,7 @@ class Services:
  
     def checkCookie(self, request: Request):
         try:
-            print(request.cookies)
+                
             # Obtenez le cookie d'accès de la requête
             access_token_cookie = request.cookies.get("access_token", "")
 
