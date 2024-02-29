@@ -19,3 +19,7 @@ class UserInDB(User):
 
 class GoogleToken(BaseModel):
     idToken: str
+
+class UserGoogle(BaseModel):
+    email: str
+    fullname: str

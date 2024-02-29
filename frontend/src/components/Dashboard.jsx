@@ -10,8 +10,9 @@ const ERROR = 1
 const SUCCESS = 2
 const EMPTY = 3
 
-function Dashboard({ setLoading, load, setCurrentState, currentState }) {
 
+function Dashboard({ setLoading, load, setCurrentState, currentState }) {
+    
     console.log("dashboard rendered")
     const refCut = useRef(null)
     const [minute, setMinute] = useState(0)
@@ -26,6 +27,7 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
     const [startBeforeOption, setStartBeforeOption] = useState(false)
     const [customCutOption, setCustomCutOption] = useState(false)
     const [error, setError] = useState('')
+
 
     const handleStartBeforeOption = (e) => {
         setStartBeforeOption(e.target.checked)

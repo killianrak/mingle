@@ -15,6 +15,13 @@ class Users(Base):
     password = Column(String)
     email = Column(String)
 
+class UsersGoogleAuth(Base):
+    __tablename__ = "UsersGoogleAuth"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String)
+    fullname = Column(String)
+
 
 
 

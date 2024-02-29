@@ -62,8 +62,8 @@ async def login_google():
     }
     
 @app.post("/auth/google")
-async def auth_google(code: GoogleToken, response: Response):
-    print(code.idToken)
+async def auth_google(code: GoogleToken, response: Response, db: Session = Depends(get_db)):
+
     token_url = "https://accounts.google.com/o/oauth2/token"
     data = {
         "code": code.idToken,
@@ -78,7 +78,9 @@ async def auth_google(code: GoogleToken, response: Response):
     if "error" in resJson:
         raise HTTPException(status_code=401, detail="Authentication failed.")
     user_info = requests.get("https://www.googleapis.com/oauth2/v1/userinfo", headers={"Authorization": f"Bearer {access_token}"})
+    services.create_user_google(user_info.json(), db)
     response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True, samesite="lax")
+
     return user_info.json()
 
 @app.post("/traitement-minimum")

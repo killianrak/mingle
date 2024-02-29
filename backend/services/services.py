@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, Request, status
 import magic
-from BaseModel.Auth import TokenData, UserInDB
-from core.Models import Users
+from BaseModel.Auth import TokenData, UserGoogle, UserInDB
+from core.Models import Users, UsersGoogleAuth
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -34,7 +34,17 @@ class Services:
         db.add(new_user)
         db.commit()
         return new_user
-
+    
+    def create_user_google(self, data, db):
+        user = db.query(Users).filter(Users.email == data['email']).first()
+        if user:
+            raise HTTPException(status_code=409, detail="Account already exists with this email")
+        user_google = db.query(UsersGoogleAuth).filter(UsersGoogleAuth.email == data["email"])
+        if not user_google:
+            add_user = UsersGoogleAuth(email = data['email'], fullname = data['name'])
+            db.add(add_user)
+            db.commit()
+        
     def verify_password(self, plain_password, hashed_password):
         return self.__pwd_context.verify(plain_password, hashed_password)
 
