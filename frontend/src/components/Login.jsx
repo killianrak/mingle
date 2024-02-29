@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react"
 import { Toaster, toast } from 'sonner'
-import useSWR from 'swr'
 
-const fetcher = (url, options) => fetch(url, options).then(res => res.json())
 function Login() {
 
     const urlObject = new URL(window.location.href);
@@ -10,27 +8,7 @@ function Login() {
 
     // Utilisez get() pour récupérer la valeur d'un paramètre spécifique
     const code = searchParams.get('code');
-    // if(code)
-    //         {
-    //             const json = {idToken: code}
-    //             const { data, error, isLoading } = useSWR('http://localhost:8000/auth/google', (url) => fetcher(url, {
-    //                 method: 'POST',
-    //                 credentials: 'include',
-    //                 headers: {
-    //                 'Content-Type': 'application/json'
-    //                 },
-    //                 body: JSON.stringify(json)
-    //             }))
-
-    //             if(data && data.detail)
-    //             {
-    //                 toast.error(data.detail)
-    //             }
-    //             else {
-    //                 window.location.href = "/dashboard"
-    //             }
-
-    //         }        
+     
     useEffect(() => {
         if (code) {
             const json = { idToken: code }

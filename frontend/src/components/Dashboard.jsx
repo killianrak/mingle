@@ -12,7 +12,7 @@ const EMPTY = 3
 
 
 function Dashboard({ setLoading, load, setCurrentState, currentState }) {
-    
+
     console.log("dashboard rendered")
     const refCut = useRef(null)
     const [minute, setMinute] = useState(0)
@@ -31,22 +31,20 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
 
     const handleStartBeforeOption = (e) => {
         setStartBeforeOption(e.target.checked)
-        if(customCutOption)
-        {
+        if (customCutOption) {
             setCustomCutOption(!e.target.checked)
         }
-        
+
     }
 
     const handleCutOption = (e) => {
         setCustomCutOption(e.target.checked)
-        if(startBeforeOption)
-        {
+        if (startBeforeOption) {
             setStartBeforeOption(!e.target.checked)
         }
-        
+
     }
-    
+
 
     const handleVideo = (e) => {
         console.log(e)
@@ -188,7 +186,7 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
     const downloadToFile = (content, filename, contentType) => {
         const a = document.createElement('a');
         const file = new Blob([content], { type: contentType });
-    
+
         a.href = URL.createObjectURL(file);
         a.download = filename;
         a.click();
@@ -205,18 +203,18 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
             setLoading(true)
             setCurrentState(LOADING)
             const res = await fetch(`http://localhost:8000/${endpoint}?video_data=${encodeURIComponent(JSON.stringify(video_data))}`,
-            {
-                method: "POST",
-                credentials: "include",
-                body: formData
-            })
+                {
+                    method: "POST",
+                    credentials: "include",
+                    body: formData
+                })
             setLoading(false)
             setCurrentState(SUCCESS)
-            if(res.status == 200){
+            if (res.status == 200) {
                 const content = await res.blob()
-                downloadToFile(content, "munji_video.zip", res.headers["content-type"])                        
+                downloadToFile(content, "munji_video.zip", res.headers["content-type"])
             }
-            else{
+            else {
                 const error = await res.json()
                 throw new Error(error.detail)
             }
@@ -248,42 +246,42 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
             controlPassed = false
         }
 
-        if (controlPassed) {
+        if (controlPassed && currentState != LOADING) {
 
-            if((minimumMinutes && minimumMinutes != 0) && (startBefore == null || startBefore == 0)){
-                const video_data = {'divide_each_minutes': minimumMinutes}
+            if ((minimumMinutes && minimumMinutes != 0) && (startBefore == null || startBefore == 0)) {
+                const video_data = { 'divide_each_minutes': minimumMinutes }
                 const endpoint = "traitement-minimum"
                 fetchData(video_data, endpoint)
 
             }
-            else if((minimumMinutes && minimumMinutes != 0) && (startBefore && startBefore != 0)){
-                const video_data = {'divide_each_minutes': minimumMinutes, 'start_before': startBefore}
+            else if ((minimumMinutes && minimumMinutes != 0) && (startBefore && startBefore != 0)) {
+                const video_data = { 'divide_each_minutes': minimumMinutes, 'start_before': startBefore }
                 const endpoint = "traitement-before"
                 fetchData(video_data, endpoint)
-        }
-        else if(Object.keys(allTimes).length > 0)
-        {
-            let allCheckPoints = []
-            Object.keys(allTimes).forEach(e => {
-                console.log(allTimes[e].props.time)
-                let time = allTimes[e].props.time
-                time = time.slice(0, -1);
-                time = time.split("\"")
-                let checkPointsSeconds = (parseInt(time[0]) * 60) + parseInt(time[1])
-                allCheckPoints.push(String(checkPointsSeconds))
-            })
-            const video_data = {"checkpoints": allCheckPoints}
-            const endpoint = "traitement-checkpoints"
-            fetchData(video_data, endpoint)
-        }
+            }
+            else if (Object.keys(allTimes).length > 0) {
+                let allCheckPoints = []
+                Object.keys(allTimes).forEach(e => {
+                    console.log(allTimes[e].props.time)
+                    let time = allTimes[e].props.time
+                    time = time.slice(0, -1);
+                    time = time.split("\"")
+                    let checkPointsSeconds = (parseInt(time[0]) * 60) + parseInt(time[1])
+                    allCheckPoints.push(String(checkPointsSeconds))
+                })
+                const video_data = { "checkpoints": allCheckPoints }
+                const endpoint = "traitement-checkpoints"
+                fetchData(video_data, endpoint)
+            }
 
+
+        }
 
     }
-}   
 
     return <>
 
-       <div className="flex-col h-screen py-8 px-8 md:py-0 md:px-0">
+        <div className="flex-col h-screen py-8 px-8 md:py-0 md:px-0">
 
             <div className="flex flex-col flex-grow">
 
@@ -297,8 +295,8 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
                             <Input name="Youtube Video" type="file" id="youtube-video" readOnly={false} onChange={handleVideo} accept={"video/*"} />
                             <Input name="Gameplay Video" type="file" id="gameplay-video" readOnly={false} onChange={handleGameplay} accept={"video/*"} />
 
-                            {!customCutOption && <Input name="Minimum duration in minutes" type="number" id="minimum-duration" readOnly={false} onChange={setMinimumMinutes} value={minimumMinutes}/>}
-                            {startBeforeOption && <Input name="Start before X seconds the last video ended" type="number" id="start-before" readOnly={false} onChange={setStartBefore} value={startBefore}/>}
+                            {!customCutOption && <Input name="Minimum duration in minutes" type="number" id="minimum-duration" readOnly={false} onChange={setMinimumMinutes} value={minimumMinutes} />}
+                            {startBeforeOption && <Input name="Start before X seconds the last video ended" type="number" id="start-before" readOnly={false} onChange={setStartBefore} value={startBefore} />}
                             {customCutOption && <CutTimes name="Precise all the cut times" times={allTimes} />}
                             {customCutOption && <button onClick={show} className="flex flex-start bg-sky-700 text-white p-2 pl-4 rounded-md w-24 text-center">
                                 Add cut
@@ -337,18 +335,18 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
                             <div className="flex flex-col bg-slate-100 rounded-md p-4">
                                 <h1 className="text-center font-bold">Options</h1>
                                 <div className="flex flex-row-reverse justify-end mt-4">
-                                        <div className="flex flex-col">
-                                            <label htmlFor="start-before-check" className="cursor-pointer">Start before X seconds the last video ended</label>
-                                            <label htmlFor="all-cut-times" className="pr-4 cursor-pointer">Precise the customized cut times</label>              
-                                        </div>
-                                        <div className="flex flex-col justify-around mr-4">
-                                            <input checked={startBeforeOption} onChange={handleStartBeforeOption} name="start-before-check" type="checkbox" id="start-before-check" className="cursor-pointer"/>  
-                                            <input checked={customCutOption} onChange={handleCutOption}name="all-cut-times" type="checkbox" id="all-cut-times" className="cursor-pointer"/>                                      
-                                        </div>                                      
+                                    <div className="flex flex-col">
+                                        <label htmlFor="start-before-check" className="cursor-pointer">Start before X seconds the last video ended</label>
+                                        <label htmlFor="all-cut-times" className="pr-4 cursor-pointer">Precise the customized cut times</label>
+                                    </div>
+                                    <div className="flex flex-col justify-around mr-4">
+                                        <input checked={startBeforeOption} onChange={handleStartBeforeOption} name="start-before-check" type="checkbox" id="start-before-check" className="cursor-pointer" />
+                                        <input checked={customCutOption} onChange={handleCutOption} name="all-cut-times" type="checkbox" id="all-cut-times" className="cursor-pointer" />
+                                    </div>
                                 </div>
-                                  
 
-                              
+
+
                             </div>
 
                         </div>
@@ -360,7 +358,7 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
             </div>
         </div>
         <Toaster richColors closeButton />
-        </>
+    </>
 
 }
 

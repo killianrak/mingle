@@ -7,7 +7,7 @@ import { Settings } from './components/Settings'
 import { Landing } from './components/Landing';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
-import { toast } from 'sonner';
+
 
 const LoadingContext = createContext();
 
@@ -47,11 +47,7 @@ function App() {
 
   return <RouterProvider router={router} />
 
-
 }
-
-
-const fetcher = (url, options) => fetch(url, options).then(res => res.json())
 
 function Body() {
 
@@ -60,29 +56,8 @@ function Body() {
   const [loading, setLoading] = useState(false)
   const [currentState, setCurrentState] = useState(EMPTY)
   const [allLoad, setLoadAll] = useState(true)
-  console.log("rerender body")
+
   const ref = useRef(null)
-  
-
-    
-  // const {data, error, isLoading} = useSWR("http://localhost:8000/check-cookie", (url) => fetcher(url, {
-  //   credentials: "include",
-  //   headers: {
-  //     accept: "application/json"
-  //   }
-  // }))
-  // if(!isLoading)
-  // {
-  //   if(data && data.detail)
-  //   {
-  //     window.location.href = "/signin"
-  //   }
-  //   else {
-  //     setLoadAll(isLoading)
-  //   }
-  // }
-
-  
 
   useEffect(() => {
 
