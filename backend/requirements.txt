@@ -3,7 +3,6 @@ anyio==4.2.0
 bcrypt==4.0.1
 certifi==2023.11.17
 charset-normalizer==3.3.2
-python-magic==0.4.27
 click==8.1.7
 colorama==0.4.6
 decorator==4.4.2
@@ -20,6 +19,7 @@ imageio==2.33.1
 imageio-ffmpeg==0.4.9
 importlib-resources==6.1.1
 jose==1.0.0
+libmagic==1.0
 limits==3.7.0
 moviepy==1.0.3
 numpy==1.26.3
@@ -31,6 +31,7 @@ pyasn1==0.5.1
 pydantic==2.6.0
 pydantic_core==2.16.1
 python-jose==3.3.0
+python-magic==0.4.27
 python-multipart==0.0.9
 requests==2.31.0
 rsa==4.9
