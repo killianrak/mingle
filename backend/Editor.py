@@ -34,6 +34,7 @@ class Editor:
                 f'assets/{id}.mp4'
             ]
             subprocess.run(cut_cmd,check=True)
+            self.__video_basse_clip.close()
             os.remove(self.__video_basse_path)
             self.__video_basse_path = f'assets/{id}.mp4'
             self.__delete_videos.append(f'assets/{id}.mp4')
@@ -49,10 +50,12 @@ class Editor:
                 f'assets/{id}.mp4'
             ]
             subprocess.run(loop_cmd,check=True)
+            self.__video_basse_clip.close()
             os.remove(self.__video_basse_path)
             print("video removed")
             self.__video_basse_path = f'assets/{id}.mp4'
             self.__delete_videos.append(f'assets/{id}.mp4')
+            
         self.__delete_videos.append(self.__video_basse_path)
 
     def downloadVideos(self, videos):
@@ -145,7 +148,13 @@ class Editor:
             video_parts.append(cmd)
 
         results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
+        self.__video_haute_clip.close()
         os.remove(self.__video_haute_path)
+        
+        #add the api request to get .str subtitle file
+        
+        #add the function to set the subtitle on the video with the moviepy
+        
         zip_filename = self.downloadVideos(self.__cutted_videos)
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
@@ -240,6 +249,7 @@ class Editor:
 
         # Sauvegarder chaque partie
         results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
+        self.__video_haute_clip.close()
         os.remove(self.__video_haute_path)
         zip_filename = self.downloadVideos(self.__cutted_videos)
         self.__delete_videos.append(zip_filename)
@@ -304,6 +314,7 @@ class Editor:
                 ]
             video_parts.append(cmd)
         results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
+        self.__video_haute_clip.close()
         os.remove(self.__video_haute_path)
         zip_filename = self.downloadVideos(self.__cutted_videos)
         self.__delete_videos.append(zip_filename)

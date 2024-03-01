@@ -3,11 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "docker compose up -d && (sleep 5 && electron .)"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",
