@@ -8,7 +8,8 @@ function createMainWindow(){
             })
     
     const startUrl = url.format({
-        pathname: "http://localhost:8080"
+        pathname: "/app/dist/index.html",
+        protocol: 'file'
     })
 
     mainWindow.loadURL(startUrl)

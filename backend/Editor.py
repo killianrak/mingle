@@ -5,7 +5,9 @@ import subprocess
 import os
 import zipfile
 from fastapi.responses import FileResponse
-import uuid 
+import uuid
+
+from services.subtitles import Subtitles 
 
 class Editor:
 
@@ -15,6 +17,7 @@ class Editor:
         self.__largeur_cible = 1080
         self.__hauteur_cible = 1920
         self.__cutted_videos = []
+        self.__final_videos = []
         self.__video_haute_path = video_haute_path
         self.__video_basse_path = video_basse_path
         self.__video_haute_clip = VideoFileClip(video_haute_path)
@@ -69,13 +72,17 @@ class Editor:
         # Supprimer les fichiers individuels après les avoir ajoutés au zip
         for v in videos:
             os.remove(v)
-
+        print(zip_filename)
         return zip_filename
     
     def clearAll(self):
         for file_path in self.__delete_videos:
             if os.path.exists(file_path):
                 os.remove(file_path)
+        for file_path in self.__final_videos:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
                 
     async def divideEachXMinutes(self, x):
         print("traitement...")
@@ -86,7 +93,7 @@ class Editor:
         start_time = 0
         part_index = 1
         video_parts = []
-
+        commands_subtitles = []
         # Hauteur pour chaque moitié du cadre
         hauteur_moitié = self.__hauteur_cible // 2
 
@@ -154,15 +161,43 @@ class Editor:
         #add the api request to get .str subtitle file
         
         #add the function to set the subtitle on the video with the moviepy
+        subtitleManager = Subtitles(self.__cutted_videos)
+        subtitleManager.subtitle()
+        for video_path in self.__cutted_videos:
+            
+            print("boucle")
+            final_output = f'assets/{uuid.uuid4()}.mp4'
+            print(video_path)
+            srt_file = f"subtitles_srt/{video_path.split('/')[1].split('.')[0]}.srt"
+            print(srt_file)
+            command = self.addSubtitle(video_path, srt_file, final_output)
+            print(command)
+            commands_subtitles.append(command)
+            self.__final_videos.append(final_output)
         
-        zip_filename = self.downloadVideos(self.__cutted_videos)
+        res = await asyncio.gather(*(self.run_subprocess(c) for c in commands_subtitles))
+            
+        zip_filename = self.downloadVideos(self.__final_videos)
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
 
     async def run_subprocess(self, v):
-        proc = await asyncio.create_subprocess_exec(*v, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-        output, errors = await proc.communicate()
+
+        # proc = await asyncio.create_subprocess_exec(*v, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        # output, errors = await proc.communicate() 
+    # Créer le processus avec le gestionnaire de contexte
+        async with asyncio.create_subprocess_exec(*v, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE) as proc:
+        # Attendre la fin du processus
+            output, errors = await proc.communicate() 
+        # print("Output :")
+        # print(output)
+        # print("Errors :")
+        # print(errors)
+            if proc.returncode != 0:
+                print(f"Erreur lors de l'exécution de la commande: {errors.decode()}")
+                raise Exception(f"Erreur lors de l'exécution de la commande: {errors.decode()}")
         return output, errors
+
 
     async def startNextVideoBeforeXSeconds(self, min_duration, x):
         
@@ -320,8 +355,33 @@ class Editor:
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
 
+    def addSubtitle(self, video_file, srt_file, output_file):
+        print("started")
+        # Vérifier si les fichiers existent
+        if not os.path.exists(video_file):
+            print(f"Erreur: Le fichier vidéo {video_file} n'existe pas.")
+            return
+        if not os.path.exists(srt_file):
+            print(f"Erreur: Le fichier SRT {srt_file} n'existe pas.")
+            return
 
-  
+        # Options de style des sous-titres
+        # style_options = (
+        #     "ForceStyle='FontName=Arial,Fontsize=24,PrimaryColour=&HFFFFFF&,"
+        #     "SecondaryColour=&H0000FF&,OutlineColour=&H000000&,BackColour=&H000000&,"
+        #     "Bold=0,Italic=0,Outline=1,Shadow=1,BorderStyle=1,Alignment=2,MarginL=20,MarginR=20,MarginV=20'"
+        # )
+
+        # Utiliser FFmpeg pour ajouter les sous-titres à la vidéo avec le style personnalisé
+        command = [
+            'ffmpeg',
+            '-i', video_file,
+            '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+            '-vf', f'subtitles={srt_file}',
+            '-c:a', 'copy',
+            output_file
+        ]
+        return command
 
 
 
