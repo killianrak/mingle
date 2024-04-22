@@ -71,6 +71,7 @@ class Editor:
 
         # Supprimer les fichiers individuels après les avoir ajoutés au zip
         for v in videos:
+            print("removed")
             os.remove(v)
         print(zip_filename)
         return zip_filename
@@ -79,11 +80,7 @@ class Editor:
         for file_path in self.__delete_videos:
             if os.path.exists(file_path):
                 os.remove(file_path)
-        for file_path in self.__final_videos:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        
-                
+                      
     async def divideEachXMinutes(self, x):
         print("traitement...")
         # Durée minimale souhaitée pour chaque partie en secondes
@@ -93,7 +90,6 @@ class Editor:
         start_time = 0
         part_index = 1
         video_parts = []
-        commands_subtitles = []
         # Hauteur pour chaque moitié du cadre
         hauteur_moitié = self.__hauteur_cible // 2
 
@@ -161,20 +157,8 @@ class Editor:
         #add the api request to get .str subtitle file
         
         #add the function to set the subtitle on the video with the moviepy
-        subtitleManager = Subtitles(self.__cutted_videos)
-        subtitleManager.subtitle()
-        for video_path in self.__cutted_videos:
-            
-            print("boucle")
-            final_output = f'assets/{uuid.uuid4()}.mp4'
-            print(video_path)
-            ass_file = f"subtitles/{video_path.split('/')[1].split('.')[0]}.ass"
-            command = subtitleManager.addSubtitle(video_path, ass_file, final_output)
-            commands_subtitles.append(command)
-            self.__final_videos.append(final_output)
+        await self.putSubtitle()
         
-        res = await asyncio.gather(*(self.run_subprocess(c) for c in commands_subtitles))
-        subtitleManager.deleteSubtitlesFiles()
         zip_filename = self.downloadVideos(self.__final_videos)
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
@@ -229,6 +213,7 @@ class Editor:
             # Découper la partie de la vidéo
             output_video_path = f'assets/{uuid.uuid4()}.mp4'
             self.__cutted_videos.append(output_video_path)
+            self.__delete_videos.append(output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -263,6 +248,7 @@ class Editor:
             self.__cutted_videos.pop()
             last_output_video_path = f'assets/{uuid.uuid4()}.mp4'
             self.__cutted_videos.append(last_output_video_path)
+            self.__delete_videos.append(last_output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -287,9 +273,11 @@ class Editor:
         results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
         self.__video_haute_clip.close()
         os.remove(self.__video_haute_path)
-        zip_filename = self.downloadVideos(self.__cutted_videos)
+        await self.putSubtitle()
+        zip_filename = self.downloadVideos(self.__final_videos)
         self.__delete_videos.append(zip_filename)
-        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)            
+        return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)  
+              
     async def divideWithCheckPoints(self, checkpointRanges): #[300, 600, 900]
         output_folder = 'assets/'
         video_parts = []
@@ -303,6 +291,7 @@ class Editor:
                 raise HTTPException(status_code=422, detail="Vous avez spécifié un cut time supérieur à la durée de la vidéo.")
             output_video_path = f'{output_folder}{uuid.uuid4()}.mp4'
             self.__cutted_videos.append(output_video_path)
+            self.__delete_videos.append(output_video_path)
             cmd = [
                 'ffmpeg',
                 '-i', self.__video_haute_path,
@@ -330,6 +319,7 @@ class Editor:
         if float(last_start_time) < last_end_time:
             last_output_video_path = f'{output_folder}{uuid.uuid4()}.mp4'
             self.__cutted_videos.append(last_output_video_path)
+            self.__delete_videos.append(last_output_video_path)
             cmd = [
                     'ffmpeg',
                     '-i', self.__video_haute_path,
@@ -352,9 +342,27 @@ class Editor:
         results = await asyncio.gather(*(self.run_subprocess(v) for v in video_parts))
         self.__video_haute_clip.close()
         os.remove(self.__video_haute_path)
-        zip_filename = self.downloadVideos(self.__cutted_videos)
+        await self.putSubtitle()
+        zip_filename = self.downloadVideos(self.__final_videos)
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
+    
+    async def putSubtitle(self):
+        
+        commands_subtitles = []     
+        subtitleManager = Subtitles(self.__cutted_videos)
+        subtitleManager.subtitle()
+        for video_path in self.__cutted_videos:
+            print("boucle")
+            final_output = f'assets/{uuid.uuid4()}.mp4'
+            print(video_path)
+            ass_file = f"subtitles/{video_path.split('/')[1].split('.')[0]}.ass"
+            command = subtitleManager.addSubtitle(video_path, ass_file, final_output)
+            commands_subtitles.append(command)
+            self.__final_videos.append(final_output)
+        
+        res = await asyncio.gather(*(self.run_subprocess(c) for c in commands_subtitles))
+        subtitleManager.deleteSubtitlesFiles()
     
     # def make_textclip(self, txt, font, font_size, color, bg_color):
     #     """Crée un TextClip personnalisé pour les sous-titres."""

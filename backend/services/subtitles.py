@@ -187,7 +187,6 @@ class Subtitles:
     def deleteSubtitlesFiles(self):
         for file_path in self.__allFiles:
             if os.path.exists(file_path):
-                print("exists")
                 os.remove(file_path)
 
     def addSubtitle(self, video_file, ass_file, output_file):

@@ -33,6 +33,7 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
         setStartBeforeOption(e.target.checked)
         if (customCutOption) {
             setCustomCutOption(!e.target.checked)
+            deleteAllTimes()
         }
 
     }
@@ -41,6 +42,8 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
         setCustomCutOption(e.target.checked)
         if (startBeforeOption) {
             setStartBeforeOption(!e.target.checked)
+            setMinimumMinutes(null)
+            setStartBefore(null)
         }
 
     }
@@ -107,7 +110,10 @@ function Dashboard({ setLoading, load, setCurrentState, currentState }) {
         })
 
     }
-
+    const deleteAllTimes = (e) => {
+        setAllTimes({})
+        setTimeRef({})
+    }
     const addTime = () => {
         if (minute > 0 || seconds > 0) {
 
