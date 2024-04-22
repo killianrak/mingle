@@ -6,9 +6,7 @@ import os
 import zipfile
 from fastapi.responses import FileResponse
 import uuid
-from moviepy.editor import VideoFileClip, CompositeVideoClip, TextClip
-from moviepy.video.tools.subtitles import SubtitlesClip
-
+from moviepy.editor import VideoFileClip
 from services.subtitles import Subtitles 
 
 class Editor:
@@ -171,7 +169,7 @@ class Editor:
             final_output = f'assets/{uuid.uuid4()}.mp4'
             print(video_path)
             ass_file = f"subtitles/{video_path.split('/')[1].split('.')[0]}.ass"
-            command = self.addSubtitle(video_path, ass_file, final_output)
+            command = subtitleManager.addSubtitle(video_path, ass_file, final_output)
             commands_subtitles.append(command)
             self.__final_videos.append(final_output)
         
@@ -357,36 +355,6 @@ class Editor:
         zip_filename = self.downloadVideos(self.__cutted_videos)
         self.__delete_videos.append(zip_filename)
         return FileResponse(zip_filename, media_type='application/zip', filename=zip_filename)
-
-    def addSubtitle(self, video_file, ass_file, output_file):
-        print("started")
-        # Vérifier si les fichiers existent
-        if not os.path.exists(video_file):
-            print(f"Erreur: Le fichier vidéo {video_file} n'existe pas.")
-            return
-        if not os.path.exists(ass_file):
-            print(f"Erreur: Le fichier SRT {ass_file} n'existe pas.")
-            return
-
-        # Options de style des sous-titres
-        # style_options = (
-        #     "ForceStyle='FontName=Arial,Fontsize=24,PrimaryColour=&HFFFFFF&,"
-        #     "SecondaryColour=&H0000FF&,OutlineColour=&H000000&,BackColour=&H000000&,"
-        #     "Bold=0,Italic=0,Outline=1,Shadow=1,BorderStyle=1,Alignment=2,MarginL=20,MarginR=20,MarginV=20'"
-        # )
-
-        # Utiliser FFmpeg pour ajouter les sous-titres à la vidéo avec le style personnalisé
-        command = [
-            'ffmpeg',
-            '-i', video_file,
-            '-vf', f"subtitles={ass_file}",
-            '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-            '-c:a', 'copy',
-            '-vsync', '2',
-            output_file
-        ]
-        
-        return command
     
     # def make_textclip(self, txt, font, font_size, color, bg_color):
     #     """Crée un TextClip personnalisé pour les sous-titres."""

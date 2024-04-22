@@ -189,3 +189,33 @@ class Subtitles:
             if os.path.exists(file_path):
                 print("exists")
                 os.remove(file_path)
+
+    def addSubtitle(self, video_file, ass_file, output_file):
+        print("started")
+        # Vérifier si les fichiers existent
+        if not os.path.exists(video_file):
+            print(f"Erreur: Le fichier vidéo {video_file} n'existe pas.")
+            return
+        if not os.path.exists(ass_file):
+            print(f"Erreur: Le fichier SRT {ass_file} n'existe pas.")
+            return
+
+        # Options de style des sous-titres
+        # style_options = (
+        #     "ForceStyle='FontName=Arial,Fontsize=24,PrimaryColour=&HFFFFFF&,"
+        #     "SecondaryColour=&H0000FF&,OutlineColour=&H000000&,BackColour=&H000000&,"
+        #     "Bold=0,Italic=0,Outline=1,Shadow=1,BorderStyle=1,Alignment=2,MarginL=20,MarginR=20,MarginV=20'"
+        # )
+
+        # Utiliser FFmpeg pour ajouter les sous-titres à la vidéo avec le style personnalisé
+        command = [
+            'ffmpeg',
+            '-i', video_file,
+            '-vf', f"subtitles={ass_file}",
+            '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+            '-c:a', 'copy',
+            '-vsync', '2',
+            output_file
+        ]
+        
+        return command
