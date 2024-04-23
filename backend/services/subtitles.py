@@ -50,7 +50,7 @@ class Subtitles:
 
     def create_ass_header(self):
         """Crée l'en-tête du fichier ASS avec les styles de sous-titres."""
-        return (
+        style1 = (
             "[Script Info]\n"
             "ScriptType: v4.00+\n"
             "Collisions: Normal\n"
@@ -67,6 +67,26 @@ class Subtitles:
             "[Events]\n"
             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
         )
+        
+        style2 = (
+            "[Script Info]\n"
+            "ScriptType: v4.00+\n"
+            "Collisions: Normal\n"
+            "PlayResX: 1920\n"
+            "PlayResY: 1080\n"
+            "WrapStyle: 0\n"
+            "ScaledBorderAndShadow: yes\n\n"
+            "[V4+ Styles]\n"
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+            "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+            "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+            "Style: Default, Space Comics, 32, &H00FFFFFF, &H00FFFFFF, &H00000000, "
+            "-1, 0, 0, 0, 100, 100, 0, 0, 1, 2, 5, 10, 10, 10, 1\n\n"
+            "[Events]\n"
+            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        )
+        
+        return style2
         
     # def generate_srt_by_words(self, data):
     #     srt_content = ''
@@ -126,12 +146,20 @@ class Subtitles:
         start_time = None
         end_time = None
         word_buffer = []
+        default_color = "&H00FFFFFF"
+        highlight_color = "&H800000"
 
         for segment in data['segments']:
             for word_info in segment['words']:
                 current_word = word_info['word'].upper()
                 current_start = word_info['start']
                 current_end = word_info['end']
+                word_propriety = {
+                    "word": current_word,
+                    "start": current_start,
+                    "end": current_end
+                }
+                duration_in_centiseconds = int((current_end - current_start) * 100)
 
                 if current_word.startswith("'"):
                     # Si le mot commence par une apostrophe et le buffer est vide,
@@ -141,28 +169,44 @@ class Subtitles:
                         continue
                     elif word_buffer:
                         # Sinon, on l'ajoute au dernier mot du buffer actuel.
-                        word_buffer[-1] += current_word
+                        word_buffer[-1]["word"] += current_word
                         continue
 
-                if word_buffer and (len(word_buffer) == 4 or word_buffer[-1].endswith(('.', '?', '!'))):
+                if word_buffer and (len(word_buffer) == 4 or word_buffer[-1]["word"].endswith(('.', '?', '!'))):
                     # Écrire le groupe actuel si le buffer est plein ou le dernier mot se termine par une ponctuation.
-                    start_time_str = self.format_time_ass(start_time)
-                    end_time_str = self.format_time_ass(end_time)
-                    ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
+                    # start_time_str = self.format_time_ass(start_time)
+                    # end_time_str = self.format_time_ass(end_time)
+                    dialogue_line = f"Dialogue: 0,{self.format_time_ass(start_time)},{self.format_time_ass(end_time)},Default,,0,0,0,,"
+                    dialogue_text = ""
+                    for word in word_buffer:
+                        start = word["start"]
+                        end = word["end"]
+                        soloWord = word["word"]
+                        dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(end*1000)},\\c{highlight_color})}}{soloWord}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}"
+                    ass_content += dialogue_line + dialogue_text.strip() + "\n"
+                    # ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
                     segment_id += 1
                     word_buffer = []  # Commencer un nouveau groupe
 
                 if not word_buffer:
                     start_time = current_start  # Début du nouveau groupe
 
-                word_buffer.append(current_word)
+                word_buffer.append(word_propriety)
                 end_time = current_end  # Fin du groupe actuel
 
         # Écrire le dernier groupe de mots s'il ne remplit pas complètement un groupe de quatre.
         if word_buffer:
-            start_time_str = self.format_time_ass(start_time)
-            end_time_str = self.format_time_ass(end_time)
-            ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
+            # start_time_str = self.format_time_ass(start_time)
+            # end_time_str = self.format_time_ass(end_time)
+            dialogue_line = f"Dialogue: 0,{self.format_time_ass(start_time)},{self.format_time_ass(end_time)},Default,,0,0,0,,"
+            dialogue_text = ""
+            for word in word_buffer:
+                start = word["start"]
+                end = word["end"]
+                soloWord = word["word"]
+                dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(end*1000)},\\c{highlight_color})}}{soloWord}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}"
+            ass_content += dialogue_line + dialogue_text.strip() + "\n"
+            # ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
 
         return ass_content
 
