@@ -101,29 +101,49 @@ class Editor:
             output_video_path = f'assets/{uuid.uuid4()}.mp4'
             self.__cutted_videos.append(output_video_path)
             self.__delete_videos.append(output_video_path)
+        #     cmd = [
+        #         'ffmpeg',
+        #         '-i', self.__video_haute_path,
+        #         '-i', self.__video_basse_path,
+        #         '-ss', str(start_time),
+        #         '-to', str(end_time),
+        #         '-filter_complex',
+        #         f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
+        #         f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
+        #         "[haute][bas]vstack",
+        #         '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+        #         '-profile:v', 'high',  # Profil de l'encodeur
+        #         '-level', '4.2',  # Niveau de l'encodeur
+        #         '-vsync', '2', 
+        #         output_video_path
+        # ]
             cmd = [
                 'ffmpeg',
+                '-hwaccel', 'cuda',  # Enable CUDA hardware acceleration
+                '-hwaccel_output_format', 'cuda',  # Use CUDA for output format
                 '-i', self.__video_haute_path,
                 '-i', self.__video_basse_path,
                 '-ss', str(start_time),
                 '-to', str(end_time),
                 '-filter_complex',
-                f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
-                f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
-                "[haute][bas]vstack",
-                '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                '-profile:v', 'high',  # Profil de l'encodeur
-                '-level', '4.2',  # Niveau de l'encodeur
-                '-vsync', '2', 
+                f"[0:v]scale_cuda=-2:{hauteur_moitié},crop_cuda={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
+                f"[1:v]scale_cuda=-2:{hauteur_moitié},crop_cuda={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
+                "[haute][bas]vstack",  # Stack the two video streams vertically
+                '-c:v', 'h264_nvenc',  # Use NVENC H.264 codec for encoding
+                '-preset', 'slow',  # Encoder preset (consider 'slow' for quality or 'fast' for speed)
+                '-profile:v', 'high',  # Encoder profile
+                '-level', '4.2',  # Encoder level
+                '-vsync', '2',
+                '-b:v', '1000k',
                 output_video_path
-        ]
+            ]
             # Ajouter la partie à la liste
             video_parts.append(cmd)
             # Mettre à jour les variables pour la prochaine partie
             start_time = end_time
             part_index += 1
         # Fusionner les deux dernières parties si la dernière partie est inférieure à la durée minimale
-        if float(video_parts[-1][8]) - float(video_parts[-1][6]) < min_part_duration and len(video_parts) >= 2:
+        if float(video_parts[-1][12]) - float(video_parts[-1][10]) < min_part_duration and len(video_parts) >= 2:
             last_part = video_parts.pop()
             self.__cutted_videos.pop()
             second_last_part = video_parts.pop()
@@ -131,20 +151,40 @@ class Editor:
             last_output_video_path = f'assets/{uuid.uuid4()}.mp4'
             self.__delete_videos.append(last_output_video_path)
             self.__cutted_videos.append(last_output_video_path)
+            # cmd = [
+            #     'ffmpeg',
+            #     '-i', self.__video_haute_path,
+            #     '-i', self.__video_basse_path,
+            #     '-ss', str(second_last_part[6]),
+            #     '-to', str(last_part[8]),
+            #     '-filter_complex',
+            #     f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
+            #     f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
+            #     "[haute][bas]vstack",
+            #     '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+            #     '-profile:v', 'high',  # Profil de l'encodeur
+            #     '-level', '4.2',  # Niveau de l'encodeur
+            #     '-vsync', '2', 
+            #     '-b:v', '1000k',
+            #     last_output_video_path
+            # ]
             cmd = [
                 'ffmpeg',
+                '-hwaccel', 'cuda',  # Enable CUDA hardware acceleration
+                '-hwaccel_output_format', 'cuda',  # Use CUDA for output format
                 '-i', self.__video_haute_path,
                 '-i', self.__video_basse_path,
-                '-ss', str(second_last_part[6]),
-                '-to', str(last_part[8]),
+                '-ss', str(second_last_part[10]),
+                '-to', str(last_part[12]),
                 '-filter_complex',
-                f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
-                f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
-                "[haute][bas]vstack",
-                '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-                '-profile:v', 'high',  # Profil de l'encodeur
-                '-level', '4.2',  # Niveau de l'encodeur
-                '-vsync', '2', 
+                f"[0:v]scale_cuda=-2:{hauteur_moitié},crop_cuda={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
+                f"[1:v]scale_cuda=-2:{hauteur_moitié},crop_cuda={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
+                "[haute][bas]vstack",  # Stack the two video streams vertically
+                '-c:v', 'h264_nvenc',  # Use NVENC H.264 codec for encoding
+                '-preset', 'slow',  # Encoder preset (consider 'slow' for quality or 'fast' for speed)
+                '-profile:v', 'high',  # Encoder profile
+                '-level', '4.2',  # Encoder level
+                '-vsync', '2',
                 '-b:v', '1000k',
                 last_output_video_path
             ]

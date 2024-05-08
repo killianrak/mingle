@@ -4,10 +4,6 @@ import whisper
 
 model = whisper.load_model("base")
 
-from openai import OpenAI
-client = OpenAI(api_key="sk-proj-79DE9LygeYhEYmcjplLJT3BlbkFJ9v5oinLluahN6qNWAQDo")
-
-
 # transcript = transcriber.transcribe("./my-local-audio-file.wav")
 
 class Subtitles:
@@ -182,7 +178,7 @@ class Subtitles:
                         start = word["start"]
                         end = word["end"]
                         soloWord = word["word"]
-                        dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(end*1000)},\\c{highlight_color})}}{soloWord}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}"
+                        dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(start*1000)+1},\\c{highlight_color})}}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}{soloWord}"
                     ass_content += dialogue_line + dialogue_text.strip() + "\n"
                     # ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
                     segment_id += 1
@@ -204,7 +200,7 @@ class Subtitles:
                 start = word["start"]
                 end = word["end"]
                 soloWord = word["word"]
-                dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(end*1000)},\\c{highlight_color})}}{soloWord}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}"
+                dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(start*1000)+1},\\c{highlight_color})}}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}{soloWord}"
             ass_content += dialogue_line + dialogue_text.strip() + "\n"
             # ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
 
