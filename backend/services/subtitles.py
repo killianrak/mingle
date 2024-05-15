@@ -74,10 +74,10 @@ class Subtitles:
             "ScaledBorderAndShadow: yes\n\n"
             "[V4+ Styles]\n"
             "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
-            "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+            "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow,"
             "Alignment, MarginL, MarginR, MarginV, Encoding\n"
-            "Style: Default, Space Comics, 32, &H00FFFFFF, &H00FFFFFF, &H00000000, "
-            "-1, 0, 0, 0, 100, 100, 0, 0, 1, 2, 5, 10, 10, 10, 1\n\n"
+            "Style: Default, Space Comics, 40, &H00FFFFFF, &H00FFFFFF, &H00000000, "
+            "-1, 0, 0, 0, 100, 100, 0, 0, 1, 2,5, 5, 10, 10, 10, 1\n\n"
             "[Events]\n"
             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
         )
@@ -172,13 +172,21 @@ class Subtitles:
                     # Écrire le groupe actuel si le buffer est plein ou le dernier mot se termine par une ponctuation.
                     # start_time_str = self.format_time_ass(start_time)
                     # end_time_str = self.format_time_ass(end_time)
+                    if word_buffer[-1]["word"] == ' .' or word_buffer[-1]["word"] ==' ?' or word_buffer[-1]["word"] == ' !':
+                        print("yes")
+                        last_word = word_buffer[-1]["word"]
+                        word_buffer.pop()
+                        print(word_buffer)
+                        word_buffer[-1]["word"] += last_word
                     dialogue_line = f"Dialogue: 0,{self.format_time_ass(start_time)},{self.format_time_ass(end_time)},Default,,0,0,0,,"
                     dialogue_text = ""
+                    line_start_time = word_buffer[0]["start"]
                     for word in word_buffer:
-                        start = word["start"]
-                        end = word["end"]
+                        relative_start = word["start"] - line_start_time
+                        # start = word["start"]
+                        relative_end = word["end"] - line_start_time
                         soloWord = word["word"]
-                        dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(start*1000)+1},\\c{highlight_color})}}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}{soloWord}"
+                        dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(relative_start*1000)},{int(relative_start*1000)+1},\\c{highlight_color})}}{{\\t({int(relative_end*1000)},{int(relative_end*1000)+1},\\c{default_color})}}{soloWord}"
                     ass_content += dialogue_line + dialogue_text.strip() + "\n"
                     # ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
                     segment_id += 1
@@ -196,11 +204,12 @@ class Subtitles:
             # end_time_str = self.format_time_ass(end_time)
             dialogue_line = f"Dialogue: 0,{self.format_time_ass(start_time)},{self.format_time_ass(end_time)},Default,,0,0,0,,"
             dialogue_text = ""
+            line_start_time = word_buffer[0]["start"]
             for word in word_buffer:
-                start = word["start"]
-                end = word["end"]
+                relative_start = word["start"] - line_start_time
+                relative_end = word["end"] - line_start_time
                 soloWord = word["word"]
-                dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(start*1000)},{int(start*1000)+1},\\c{highlight_color})}}{{\\t({int(end*1000)},{int(end*1000)+1},\\c{default_color})}}{soloWord}"
+                dialogue_text +=  f"{{\\c{default_color}}}{{\\t({int(relative_start*1000)},{int(relative_start*1000)+1},\\c{highlight_color})}}{{\\t({int(relative_end*1000)},{int(relative_end*1000)+1},\\c{default_color})}}{soloWord}"
             ass_content += dialogue_line + dialogue_text.strip() + "\n"
             # ass_content += f"Dialogue: 0,{start_time_str},{end_time_str},Default,,0,0,0,,{' '.join(word_buffer)}\n"
 
@@ -249,9 +258,10 @@ class Subtitles:
         # Utiliser FFmpeg pour ajouter les sous-titres à la vidéo avec le style personnalisé
         command = [
             'ffmpeg',
+            '-hwaccel', 'cuda', 
             '-i', video_file,
             '-vf', f"subtitles={ass_file}",
-            '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
+            '-c:v', 'h264_nvenc',
             '-c:a', 'copy',
             '-vsync', '2',
             output_file
