@@ -26,6 +26,7 @@ class Subtitles:
                 file_srt  = f"{os.path.dirname(__file__)}/../subtitles/{video_name}.ass"
                 print(file_srt)
                 self.__allFiles.append(file_srt)
+
                 
 # def generate_srt(data):
 #     srt_content = ''
@@ -248,14 +249,6 @@ class Subtitles:
             print(f"Erreur: Le fichier SRT {ass_file} n'existe pas.")
             return
 
-        # Options de style des sous-titres
-        # style_options = (
-        #     "ForceStyle='FontName=Arial,Fontsize=24,PrimaryColour=&HFFFFFF&,"
-        #     "SecondaryColour=&H0000FF&,OutlineColour=&H000000&,BackColour=&H000000&,"
-        #     "Bold=0,Italic=0,Outline=1,Shadow=1,BorderStyle=1,Alignment=2,MarginL=20,MarginR=20,MarginV=20'"
-        # )
-
-        # Utiliser FFmpeg pour ajouter les sous-titres à la vidéo avec le style personnalisé
         command = [
             'ffmpeg',
             '-hwaccel', 'cuda', 
@@ -268,3 +261,17 @@ class Subtitles:
         ]
         
         return command
+    
+    # Fonction pour créer un clip texte avec fond coloré
+def create_text_clip(text, start, end, bg_color, position):
+    txt_clip = TextClip(text, fontsize=24, color='white', font='Arial-Bold')
+    txt_clip = txt_clip.on_color(size=(txt_clip.w + 10, txt_clip.h + 10), color=bg_color, col_opacity=1)
+    txt_clip = txt_clip.set_position(position).set_start(start).set_end(end)
+    return txt_clip
+
+# Fonction pour enlever le fond coloré après la prononciation du mot
+def create_clear_clip(text, start, end, position):
+    clear_clip = TextClip(text, fontsize=24, color='white', font='Arial-Bold')
+    clear_clip = clear_clip.set_position(position).set_start(end).set_end(end + 0.5)
+    return clear_clip
+
