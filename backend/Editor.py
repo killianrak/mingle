@@ -101,22 +101,7 @@ class Editor:
             output_video_path = f'assets/{uuid.uuid4()}.mp4'
             self.__cutted_videos.append(output_video_path)
             self.__delete_videos.append(output_video_path)
-        #     cmd = [
-        #         'ffmpeg',
-        #         '-i', self.__video_haute_path,
-        #         '-i', self.__video_basse_path,
-        #         '-ss', str(start_time),
-        #         '-to', str(end_time),
-        #         '-filter_complex',
-        #         f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
-        #         f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
-        #         "[haute][bas]vstack",
-        #         '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-        #         '-profile:v', 'high',  # Profil de l'encodeur
-        #         '-level', '4.2',  # Niveau de l'encodeur
-        #         '-vsync', '2', 
-        #         output_video_path
-        # ]
+
             cmd = [
                 'ffmpeg',
                 '-hwaccel', 'cuda',  # Enable CUDA hardware acceleration
@@ -151,23 +136,7 @@ class Editor:
             last_output_video_path = f'assets/{uuid.uuid4()}.mp4'
             self.__delete_videos.append(last_output_video_path)
             self.__cutted_videos.append(last_output_video_path)
-            # cmd = [
-            #     'ffmpeg',
-            #     '-i', self.__video_haute_path,
-            #     '-i', self.__video_basse_path,
-            #     '-ss', str(second_last_part[6]),
-            #     '-to', str(last_part[8]),
-            #     '-filter_complex',
-            #     f"[0:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[haute];"
-            #     f"[1:v]scale=-2:{hauteur_moitié},crop={self.__largeur_cible}:{hauteur_moitié}:(iw-{self.__largeur_cible})/2:(ih-{hauteur_moitié})/2[bas];"
-            #     "[haute][bas]vstack",
-            #     '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast',
-            #     '-profile:v', 'high',  # Profil de l'encodeur
-            #     '-level', '4.2',  # Niveau de l'encodeur
-            #     '-vsync', '2', 
-            #     '-b:v', '1000k',
-            #     last_output_video_path
-            # ]
+
             cmd = [
                 'ffmpeg',
                 '-hwaccel', 'cuda',  # Enable CUDA hardware acceleration
