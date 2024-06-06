@@ -31,17 +31,22 @@ class EditorStory:
   async def generate_video(self):
     response_story = client.chat.completions.create(
       model="gpt-4-turbo",
-      messages=[{'role': 'user', 'content': f"Raconte une histoire captivante et intrigante pour une vidéo TikTok d'une durée de maximum 01:10 minutes et minimum 01:00 minutes. L'histoire doit être adaptée à un public allant des adolescents aux adultes. L'histoire doit avoir un début rapide pour capter l'attention, un développement intrigant. Tu peux raconter des anecdotes insolites, une légende fascinante ou une histoire inventée suffisamment intéressante pour retenir l'attention des spectateurs. Assure-toi que le style et le ton de l'histoire soient en adéquation avec le thème choisi. Ne raconte que l'histoire sans titre à la fin et sans phrase de conclusion"}]
+      messages=[{'role': 'user', 'content': f"Raconte une histoire captivante et intrigante qui fait entre 150 et 185mots. L'histoire doit être adaptée à un public allant des adolescents aux adultes. L'histoire doit avoir un début rapide pour capter l'attention, un développement intrigant. Tu peux raconter des anecdotes insolites, une légende fascinante ou une histoire inventée suffisamment intéressante pour retenir l'attention des spectateurs. Assure-toi que le style et le ton de l'histoire soient en adéquation avec le thème choisi. Ne raconte que l'histoire sans titre à la fin et sans phrase de conclusion"}]
     )
+    
     self.__response_story = response_story.choices[0].message.content
+    
+    minute, seconde = self.estimate_duration(self.__response_story)
     print(self.__response_story)
+    print(f"durée estimé: {minute}:{seconde}")
+    
     story = self.__response_story.split()
     segments = []
     start = 0
-    end = 8
+    end = 5
     while end < len(story):
       if end >= len(story):
-        if len(story) - start >= 5:
+        if len(story) - start >= 2:
           end = len(story)
         else:
         # Merge the last short segment with the previous segment
@@ -52,12 +57,12 @@ class EditorStory:
       segments.append((start, end))
 
       start = end
-      end += 8
+      end += 5
       
-    for start, end in segments:
-      prompt = self.askForStory(start, end)
-      await self.askForImages(prompt)
-
+    self.generate_voice(self.__response_story) 
+    all_prompts = [self.askForStory(start, end) for start, end in segments]
+    await self.askForImages(all_prompts)
+    
     await self.run_ffmpeg_command()
     
 
@@ -75,6 +80,10 @@ class EditorStory:
     
     self.__timecode_end_minute = int(minute) + int(self.__timecode_start_minute)
     self.__timecode_end_seconde = int(seconde) + int(self.__timecode_start_seconde)
+    
+    if(self.__timecode_end_seconde >= 60):
+          self.__timecode_end_minute += self.__timecode_end_seconde // 60
+          self.__timecode_end_seconde %= 60
     timecode_end = f"{self.__timecode_end_minute:02}:{self.__timecode_end_seconde:02}"
     
     response_image = client.chat.completions.create(
@@ -87,7 +96,7 @@ class EditorStory:
     print(response_image.choices[0].message.content)
     prompt_json = json.loads(response_image.choices[0].message.content)
   
-    self.generate_voice(self.__response_story)
+    
     return prompt_json
   
   def generate_voice(self, response_story):
@@ -106,7 +115,7 @@ class EditorStory:
       words = len(text.split())
       duration_minutes = words / words_per_minute
       minutes = int(duration_minutes)  # obtenir les minutes entières
-      seconds = int((duration_minutes - minutes) * 60) + 5  # ajouter 5 secondes au résultat
+      seconds = int((duration_minutes - minutes) * 60)  # ajouter 5 secondes au résultat
 
       if seconds >= 60:  # si le nombre de secondes dépasse 60, ajuster les minutes
           minutes += seconds // 60
