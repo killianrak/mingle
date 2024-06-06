@@ -35,7 +35,7 @@ class EditorStory:
     prompts = []
     response_story = client.chat.completions.create(
       model="gpt-4-turbo",
-      messages=[{'role': 'user', 'content': f"Raconte une histoire captivante et intrigante pour une vidéo TikTok d'une durée de maximum 01:10 minutes et minimum 01:00 minutes. L'histoire doit être adaptée à un public allant des adolescents aux adultes. L'histoire doit avoir un début rapide pour capter l'attention, un développement intrigant. Tu peux raconter des anecdotes insolites, une légende fascinante ou une histoire inventée suffisamment intéressante pour retenir l'attention des spectateurs. Assure-toi que le style et le ton de l'histoire soient en adéquation avec le thème choisi. Ne raconte que l'histoire sans titre à la fin et sans phrase de conclusion"}]
+      messages=[{'role': 'user', 'content': f"Raconte une histoire captivante et intrigante pour une vidéo d'environ 160 à 200 mots. L'histoire doit être adaptée à un public allant des adolescents aux adultes. L'histoire doit avoir un début rapide pour capter l'attention, un développement intrigant. Tu peux raconter des anecdotes insolites, une légende fascinante ou une histoire inventée suffisamment intéressante pour retenir l'attention des spectateurs. Assure-toi que le style et le ton de l'histoire soient en adéquation avec le thème choisi. Ne raconte que l'histoire sans titre à la fin et sans phrase de conclusion"}]
     )
     
     print(response_story.choices[0].message.content)
@@ -45,7 +45,7 @@ class EditorStory:
     
     response_image = client.chat.completions.create(
       model="gpt-4-turbo",
-      messages=[{'role': 'user', 'content': f"Génère moi les prompts pour l'api midjourney afin d'illustrer cette histoire : {response_story.choices[0].message.content} sous forme de tableau json, avec pour chaques éléments du tableau les clefs start, qui dit quand l'image commence, end, quand elle termine, et prompt, le prompt associé avec 'start' et 'end' formatés en 'MM:SS'. Veuillez respecter strictement ce format et ne pas inclure de texte superfle avant ou après le tableau JSON, ne pas mettre le tableau entre guillements, ou le mot json juste avant.Chaques images ne doit pas dépasser 5secondes, donc génère une image pour toutes les 5 secondes de la vidéo.Générer assez d'image pour que la dernière soit à {minute}:{seconde}, pas moins."}]
+      messages=[{'role': 'user', 'content': f"Génère moi les prompts pour l'api midjourney afin d'illustrer cette histoire : {response_story.choices[0].message.content} sous forme de tableau json, avec pour chaques éléments du tableau les clefs start, qui dit quand l'image commence, end, quand elle termine, et prompt, le prompt associé.'start' et 'end' doivent êtres formatés en 'MM:SS'. Veuillez respecter strictement ce format et ne pas inclure de texte superfle avant ou après le tableau JSON, ne pas mettre le tableau entre guillements, ou le mot json juste avant.Les clefs de chaques éléments du json doivent être obligatoirement \"start\" \"stop\" et \"prompt\". Génère une image tout les vingtaines de mots, sachant que l'on parle à 150 par minutes ça fait environ 8secondes pour chaques images. Donc tu prends une vingtaine de mots, tu génère le prompt en fonction des mots, ainsi que les timescode de sorte à ce que l'image dure 8secondes, tu prends la prochaine vingtaine et tu fais la même chose etc... Générer assez d'image pour que la dernière soit à {minute}:{seconde}, pas moins."}]
     )
     
     print(response_image.choices[0].message.content)
