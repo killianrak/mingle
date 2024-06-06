@@ -22,42 +22,78 @@ class EditorStory:
     self.__voice_path = ""
     self.__generated_images = []
     self.__image_text = ""
+    self.__timecode_start_minute = 0
+    self.__timecode_end_minute = 0
+    self.__timecode_start_seconde = 0
+    self.__timecode_end_seconde = 0
+    self.__response_story = ""
     
   async def generate_video(self):
-    all_prompts = self.askForStory()
-    await self.askForImages(all_prompts)
-
-    await self.run_ffmpeg_command()
-    
-    
-  def askForStory(self):
-    
-    prompts = []
     response_story = client.chat.completions.create(
       model="gpt-4-turbo",
       messages=[{'role': 'user', 'content': f"Raconte une histoire captivante et intrigante pour une vidéo TikTok d'une durée de maximum 01:10 minutes et minimum 01:00 minutes. L'histoire doit être adaptée à un public allant des adolescents aux adultes. L'histoire doit avoir un début rapide pour capter l'attention, un développement intrigant. Tu peux raconter des anecdotes insolites, une légende fascinante ou une histoire inventée suffisamment intéressante pour retenir l'attention des spectateurs. Assure-toi que le style et le ton de l'histoire soient en adéquation avec le thème choisi. Ne raconte que l'histoire sans titre à la fin et sans phrase de conclusion"}]
     )
-    
-    print(response_story.choices[0].message.content)
-    minute, seconde = self.estimate_duration(response_story.choices[0].message.content)
+    self.__response_story = response_story.choices[0].message.content
+    print(self.__response_story)
+    story = self.__response_story.split()
+    segments = []
+    start = 0
+    end = 8
+    while end < len(story):
+      if end >= len(story):
+        if len(story) - start >= 5:
+          end = len(story)
+        else:
+        # Merge the last short segment with the previous segment
+          last_segment = segments.pop()
+          start = last_segment[0]
+          end = len(story)
 
+      segments.append((start, end))
+
+      start = end
+      end += 8
+      
+    for start, end in segments:
+      prompt = self.askForStory(start, end)
+      await self.askForImages(prompt)
+
+    await self.run_ffmpeg_command()
+    
+
+  def askForStory(self, start_index, end_index):
+    
+    prompts = []
+
+    story = self.__response_story.split()
+    current_words = story[start_index:end_index]
+    current_words = ' '.join(current_words)
+    minute, seconde = self.estimate_duration(current_words)
+    print(current_words)
     print(f"durée estimé: {minute}:{seconde}")
+    timecode_start = f"{self.__timecode_start_minute:02}:{self.__timecode_start_seconde:02}"
+    
+    self.__timecode_end_minute = int(minute) + int(self.__timecode_start_minute)
+    self.__timecode_end_seconde = int(seconde) + int(self.__timecode_start_seconde)
+    timecode_end = f"{self.__timecode_end_minute:02}:{self.__timecode_end_seconde:02}"
     
     response_image = client.chat.completions.create(
-      model="gpt-4-turbo",
-      messages=[{'role': 'user', 'content': f"Génère moi les prompts pour l'api midjourney afin d'illustrer cette histoire : {response_story.choices[0].message.content} sous forme de tableau json, avec pour chaques éléments du tableau les clefs start, qui dit quand l'image commence, end, quand elle termine, et prompt, le prompt associé avec 'start' et 'end' formatés en 'MM:SS'. Veuillez respecter strictement ce format et ne pas inclure de texte superfle avant ou après le tableau JSON, ne pas mettre le tableau entre guillements, ou le mot json juste avant.Chaques images ne doit pas dépasser 5secondes, donc génère une image pour toutes les 5 secondes de la vidéo.Générer assez d'image pour que la dernière soit à {minute}:{seconde}, pas moins."}]
-    )
-    
+    model="gpt-4-turbo",
+    messages=[{'role': 'user', 'content': f"Génère moi le prompt pour l'api midjourney afin d'illustrer cette phrase : {current_words} sous forme de tableau json,avec les clefs start , qui dit quand l'image commence, end, quand elle termine, et prompt, le prompt associé avec 'start' et 'end' formatés en 'MM:SS' qui ont pour valeur respective {timecode_start} et {timecode_end}. Veuillez respecter strictement ce format et ne pas inclure de texte superfle avant ou après le tableau JSON, ne pas mettre le tableau entre guillements, ou le mot json juste avant."}]
+  )
+    self.__timecode_start_minute = self.__timecode_end_minute 
+    self.__timecode_start_seconde = self.__timecode_end_seconde
+      
     print(response_image.choices[0].message.content)
     prompt_json = json.loads(response_image.choices[0].message.content)
-    
-    self.generate_voice(response_story)
+  
+    self.generate_voice(self.__response_story)
     return prompt_json
   
   def generate_voice(self, response_story):
     output_voice = uuid.uuid4()
     self.__voice_path = f"voice_over/{output_voice}.mp3"
-    story = response_story.choices[0].message.content
+    story = response_story
     with client.audio.speech.with_streaming_response.create(
       model="tts-1",
       voice="onyx",
