@@ -43,7 +43,7 @@ class EditorStory:
     story = self.__response_story.split()
     segments = []
     start = 0
-    end = 5
+    end = 9
     while end < len(story):
       if end >= len(story):
         if len(story) - start >= 2:
@@ -57,7 +57,7 @@ class EditorStory:
       segments.append((start, end))
 
       start = end
-      end += 5
+      end += 9
       
     self.generate_voice(self.__response_story) 
     all_prompts = [self.askForStory(start, end) for start, end in segments]
@@ -88,7 +88,7 @@ class EditorStory:
     
     response_image = client.chat.completions.create(
     model="gpt-4-turbo",
-    messages=[{'role': 'user', 'content': f"Génère moi le prompt pour l'api midjourney afin d'illustrer cette phrase : {current_words} sous forme de tableau json,avec les clefs start , qui dit quand l'image commence, end, quand elle termine, et prompt, le prompt associé avec 'start' et 'end' formatés en 'MM:SS' qui ont pour valeur respective {timecode_start} et {timecode_end}. Veuillez respecter strictement ce format et ne pas inclure de texte superfle avant ou après le tableau JSON, ne pas mettre le tableau entre guillements, ou le mot json juste avant."}]
+    messages=[{'role': 'user', 'content': f"Génère moi le prompt pour l'api midjourney afin d'illustrer cette phrase : {current_words} sous forme d'élément json,avec les clefs start , qui dit quand l'image commence, end, quand elle termine, et prompt, le prompt associé avec 'start' et 'end' formatés en 'MM:SS' qui ont pour valeur respective {timecode_start} et {timecode_end}. Veuillez respecter strictement ce format et ne pas inclure de texte superfle avant ou après le tableau JSON, ne pas mettre le tableau entre guillements, ou le mot json juste avant."}]
   )
     self.__timecode_start_minute = self.__timecode_end_minute 
     self.__timecode_start_seconde = self.__timecode_end_seconde
@@ -250,6 +250,7 @@ class EditorStory:
     id = uuid.uuid4()
     self.__image_text = f'{id}.txt'
     with open(f'{id}.txt', 'w') as file:
+      self.__generated_images = sorted(self.__generated_images, key=lambda x: self.time_to_seconds(x["start"]))
       for image in self.__generated_images:
         start_seconds = self.convert_to_seconds(image['start'])
         end_seconds = self.convert_to_seconds(image['end'])
@@ -282,5 +283,15 @@ class EditorStory:
   def convert_to_seconds(self, time_str):
         minutes, seconds = map(int, time_str.split(':'))
         return minutes * 60 + seconds 
+      
+      
+  def time_to_seconds(self, time_str):
+    """
+    Convertit un timecode au format "MM:SS" en secondes.
+    """
+    minutes, seconds = map(int, time_str.split(':'))
+    return minutes * 60 + seconds
+  
+  
 edit = EditorStory()
 asyncio.run(edit.generate_video())
