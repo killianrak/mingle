@@ -9,7 +9,12 @@ ENV TZ=Europe/Paris
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
+    libcairo2-dev \
+    libgirepository1.0-dev \
+    libsystemd-dev \
+    libdbus-1-dev \
     yasm \
+    nasm \
     cmake \
     libtool \
     libc6 \
@@ -28,20 +33,24 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libffi-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Vérification que pkg-config est correctement installé
 RUN which pkg-config && pkg-config --version
 
-# Installation de CUDA Toolkit optimisé pour WSL
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin && \
-    mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
-    wget https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda-repo-wsl-ubuntu-12-8-local_12.8.1-1_amd64.deb && \
-    dpkg -i cuda-repo-wsl-ubuntu-12-8-local_12.8.1-1_amd64.deb && \
-    cp /var/cuda-repo-wsl-ubuntu-12-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
+# Installation de CUDA Toolkit optimisé pour ubuntu
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin && \
+    mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
+    wget https://developer.download.nvidia.com/compute/cuda/12.8.1/local_installers/cuda-repo-ubuntu2204-12-8-local_12.8.1-570.124.06-1_amd64.deb && \
+    dpkg -i cuda-repo-ubuntu2204-12-8-local_12.8.1-570.124.06-1_amd64.deb && \
+    cp /var/cuda-repo-ubuntu2204-12-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
     apt-get update && \
-    apt-get install -y cuda-toolkit-12-8 && \
-    rm cuda-repo-wsl-ubuntu-12-8-local_12.8.1-1_amd64.deb && \
+    apt-get -y install cuda-toolkit-12-8 && \
+    rm cuda-repo-ubuntu2204-12-8-local_12.8.1-570.124.06-1_amd64.deb && \
     rm -rf /var/lib/apt/lists/*
 
 # Installation des headers NVIDIA requis pour FFmpeg
@@ -91,7 +100,7 @@ RUN mkdir -p /app/assets /app/subtitles
 
 # Copie des fichiers de l'application Python
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --upgrade pip setuptools wheel && pip3 install --no-cache-dir -r requirements.txt
 
 # Copie du reste des fichiers de l'application
 COPY . .

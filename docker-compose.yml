@@ -9,6 +9,19 @@ services:
     container_name: munji-back-container
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/assets:/app/assets
+      - ./backend/subtitles:/app/subtitles
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, video]
+  
   frontend:
     depends_on:
       - backend
